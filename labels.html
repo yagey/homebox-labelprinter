@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Print Homebox Labels</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+    padding: 24px;
+    background: #eee;
+    color: #1c2321;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 1.1rem; margin: 0 0 16px; }
+  #print-all-btn {
+    padding: 10px 20px;
+    background: #2c7a4b;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    margin-bottom: 20px;
+  }
+  .item-block { margin-bottom: 28px; }
+  .panel {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+  }
+  .panel label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #666;
+    margin: 8px 0 3px;
+  }
+  .panel input[type="text"], .panel textarea {
+    width: 100%;
+    padding: 6px;
+    font-size: 0.9rem;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    font-family: inherit;
+  }
+  .panel textarea { min-height: 70px; resize: vertical; }
+
+  /* Physical sheet is landscape half-letter (8.5x5.5in). Content is printed
+     upright (not rotated) - rotate the physical printed paper 90deg
+     yourself when sliding it into a portrait UPS pouch. */
+  .label-page {
+    --label-scale: 1;
+    width: 8.5in;
+    height: 5.5in;
+    background: #fff;
+    border: 1px solid #999;
+    padding: 0.35in;
+    display: flex;
+    gap: 0.3in;
+    margin: 0 auto;
+    overflow: hidden; /* hard guarantee: content can never spill onto a 2nd printed page */
+  }
+  .label-qr {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .label-qr svg { width: 2.2in; height: 2.2in; }
+  .label-text { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .label-name { font-size: calc(38px * var(--label-scale)); font-weight: 700; line-height: 1.15; text-align: center; word-break: break-word; }
+  .label-parent { font-size: calc(16px * var(--label-scale)); color: #444; margin-top: calc(8px * var(--label-scale)); word-break: break-word; }
+  .parent-status { font-size: 0.7rem; color: #888; font-style: italic; margin-left: 6px; }
+  .label-contents-title {
+    font-size: calc(13px * var(--label-scale)); text-transform: uppercase; letter-spacing: 0.06em;
+    color: #666; margin-top: calc(18px * var(--label-scale)); border-top: 1px solid #ddd; padding-top: calc(10px * var(--label-scale));
+  }
+  .label-contents { font-size: calc(15px * var(--label-scale)); margin-top: calc(6px * var(--label-scale)); column-width: 2.2in; column-gap: 0.25in; }
+  .label-contents div { break-inside: avoid; padding: calc(2px * var(--label-scale)) 0; }
+  .label-empty { color: #999; font-style: italic; }
+  .label-truncated { color: #888; font-style: italic; margin-top: 4px; }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .no-print { display: none !important; }
+    .label-page { border: none; margin: 0; }
+    .item-block { margin: 0; }
+    /* Two half-letter labels stacked fill one physical 8.5x11 sheet -
+       break the page after every 2nd block instead of every block. */
+    .item-block:nth-of-type(2n) {
+      page-break-after: always;
+      border-top: 1px dashed #999; /* fold/cut guide between the two halves */
+    }
+    @page { size: 8.5in 11in; margin: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="no-print">Review labels, then print all</h1>
+  <button id="print-all-btn" class="no-print">Print all labels</button>
+  <div id="labels-container"></div>
+</div>
+
+<script src="vendor/qrcode.min.js"></script>
+<script src="labels.js"></script>
+</body>
+</html>

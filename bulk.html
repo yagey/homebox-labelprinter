@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bulk Print Homebox Labels</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+    padding: 24px;
+    background: #eee;
+    color: #1c2321;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 1.1rem; margin: 0 0 4px; }
+  .sub { font-size: 0.85rem; color: #666; margin: 0 0 16px; }
+  .panel {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 8px 16px;
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .row:last-child { border-bottom: none; }
+  .row input[type="checkbox"] { width: 18px; height: 18px; flex: 0 0 auto; }
+  .row label { font-size: 0.95rem; cursor: pointer; }
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .toolbar button, #generate-btn {
+    padding: 8px 14px;
+    border: 1px solid #bbb;
+    background: #f7f7f7;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  #generate-btn {
+    margin-top: 16px;
+    background: #2c7a4b;
+    color: #fff;
+    border: none;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+  }
+  #generate-btn:disabled { background: #9bb; cursor: default; }
+  #status { margin-top: 12px; font-size: 0.85rem; color: #444; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Select locations to print</h1>
+  <p class="sub">Each selected location will briefly open in a background tab so its current contents can be read, then close automatically.</p>
+
+  <div class="toolbar">
+    <button id="select-all">Select all</button>
+    <button id="select-none">Select none</button>
+  </div>
+
+  <div class="panel" id="list"></div>
+
+  <button id="generate-btn">Generate labels</button>
+  <div id="status"></div>
+</div>
+
+<script src="bulk.js"></script>
+</body>
+</html>

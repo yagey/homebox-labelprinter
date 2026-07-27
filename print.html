@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Print Homebox Label</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+    padding: 24px;
+    background: #eee;
+    color: #1c2321;
+  }
+  .wrap {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 1.1rem;
+    margin: 0 0 16px;
+  }
+  .panel {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #666;
+    margin: 12px 0 4px;
+  }
+  input[type="text"], textarea {
+    width: 100%;
+    padding: 8px;
+    font-size: 0.95rem;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    font-family: inherit;
+  }
+  textarea { min-height: 100px; resize: vertical; }
+  button {
+    margin-top: 16px;
+    padding: 10px 20px;
+    background: #2c7a4b;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+  button:hover { background: #24623c; }
+
+  /* ---- Label preview (this is what actually prints) ----
+     Most printers ignore a custom @page size like "8.5in 5.5in" and either
+     fall back to standard Letter or stretch content to fill it - so instead
+     of asking for a half-letter sheet, this prints on a NORMAL full Letter
+     page that every printer supports, with the label occupying only the TOP
+     HALF and a dashed fold guide marking where to fold/cut to get your
+     actual half-page label. Content prints upright (not rotated) - rotate
+     the physical paper 90deg yourself when sliding it into a portrait UPS
+     pouch. */
+  #print-sheet {
+    width: 8.5in;
+    height: 11in;
+    margin: 0 auto;
+    background: #fff;
+  }
+  #fold-guide {
+    border-top: 1px dashed #999;
+    text-align: center;
+    font-size: 10px;
+    color: #999;
+    padding-top: 4px;
+  }
+  #label-page {
+    --label-scale: 1;
+    width: 8.5in;
+    height: 5.5in;
+    background: #fff;
+    border: 1px solid #999;
+    padding: 0.35in;
+    display: flex;
+    gap: 0.3in;
+    overflow: hidden; /* hard guarantee: content can never spill onto a 2nd printed page */
+  }
+  #label-qr {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #label-qr svg { width: 2.2in; height: 2.2in; }
+  #label-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+  }
+  #label-name {
+    font-size: calc(38px * var(--label-scale));
+    font-weight: 700;
+    line-height: 1.15;
+    text-align: center;
+    word-break: break-word;
+  }
+  #label-parent {
+    font-size: calc(16px * var(--label-scale));
+    color: #444;
+    margin-top: calc(8px * var(--label-scale));
+    word-break: break-word;
+  }
+  #parent-status {
+    font-size: 0.75rem;
+    color: #888;
+    font-style: italic;
+  }
+  #label-contents-title {
+    font-size: calc(13px * var(--label-scale));
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #666;
+    margin-top: calc(18px * var(--label-scale));
+    border-top: 1px solid #ddd;
+    padding-top: calc(10px * var(--label-scale));
+  }
+  #label-contents {
+    font-size: calc(15px * var(--label-scale));
+    margin-top: calc(6px * var(--label-scale));
+    column-width: 2.2in;
+    column-gap: 0.25in;
+  }
+  #label-contents div { break-inside: avoid; padding: calc(2px * var(--label-scale)) 0; }
+  #label-empty { color: #999; font-style: italic; }
+  #label-truncated { color: #888; font-style: italic; margin-top: 4px; }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .no-print { display: none !important; }
+    #print-sheet { margin: 0; }
+    #label-page { border: none; }
+    @page { size: 8.5in 11in; margin: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="no-print">Homebox label - review and print</h1>
+
+  <div class="panel no-print">
+    <label for="in-name">Location name</label>
+    <input type="text" id="in-name">
+
+    <label for="in-parent">Parent location tree <span id="parent-status"></span></label>
+    <input type="text" id="in-parent">
+
+    <label for="in-url">QR target URL</label>
+    <input type="text" id="in-url">
+
+    <label for="in-items">Contents (one item per line)</label>
+    <textarea id="in-items"></textarea>
+
+    <button id="print-btn">Print label</button>
+  </div>
+
+  <div id="print-sheet">
+    <div id="label-page">
+      <div id="label-qr"></div>
+      <div id="label-text">
+        <div id="label-name"></div>
+        <div id="label-parent"></div>
+        <div id="label-contents-title">Contents</div>
+        <div id="label-contents"></div>
+      </div>
+    </div>
+    <div id="fold-guide">fold/cut here - the bottom half is intentionally blank</div>
+  </div>
+</div>
+
+<script src="vendor/qrcode.min.js"></script>
+<script src="print.js"></script>
+</body>
+</html>

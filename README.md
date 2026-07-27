@@ -1,0 +1,91 @@
+# Homebox Label Printer (Chrome extension)
+
+Adds a floating "Print Label" button to any Homebox location page. Clicking
+it opens an editable preview - QR code (linking straight back to that
+location), location name, full parent location tree, and current contents -
+sized to print as a half letter-page (8.5in x 5.5in) label you can fold or
+trim. If you're sliding it into a portrait UPS label pouch, just rotate the
+printed paper 90deg by hand when inserting it - the label text prints
+upright/normal, so it reads correctly on the box after that turn.
+
+## Install (unpacked / developer mode)
+
+1. Unzip this folder somewhere permanent (don't delete it after installing -
+   Chrome loads the extension files live from this location).
+2. Open `chrome://extensions` in Chrome.
+3. Turn on **Developer mode** (top-right toggle).
+4. Click **Load unpacked** and select this folder (the one containing
+   `manifest.json`).
+5. Visit any Homebox location page, e.g.
+   `http://localhost:3100/location/<some-id>`.
+6. A green **"Print Label"** button appears in the bottom-right corner.
+
+## Usage
+
+1. Click **Print Label** on a location page.
+2. A new tab opens with the location name and contents pre-filled from what's
+   on the page. The parent field starts with just the immediate parent, then
+   updates a moment later to the full ancestor chain (e.g.
+   `Garage > Shelf A > Bin 3`) - it briefly opens each ancestor's own page in
+   a hidden background tab to walk up the tree, since Homebox's UI only ever
+   shows the immediate parent. Review and edit anything that scraped
+   incorrectly (the fields are plain text, not tied to Homebox's database).
+3. Click **Print label**. Your browser's print dialog opens targeting a
+   normal full Letter page (8.5in x 11in) - no custom paper size needed,
+   since most printers ignore/mishandle a custom half-letter page size
+   anyway. The label prints on the top half only; the bottom half is left
+   blank with a dashed "fold/cut here" guide. Fold or cut along that line to
+   get your actual half-page (8.5in x 5.5in) label.
+
+## Bulk mode
+
+1. Go to the Locations tree page (`http://localhost:3100/locations`).
+2. Click the green **"Bulk Print Labels"** button (bottom-right).
+3. Check the locations you want labels for (Select all / Select none helpers
+   provided), then click **Generate labels**.
+4. The extension briefly opens each selected location in a background tab
+   to read its current contents, then closes it automatically - you'll see
+   a "Scraping X of N" status while this runs. Nothing is modified in
+   Homebox; this is read-only.
+5. A new tab opens with one editable label per selected location. Review/edit
+   each, then click **Print all labels** to send everything to your
+   browser's print dialog in one go - two half-page labels are stacked onto
+   each physical 8.5in x 11in sheet, with a dashed guide down the middle
+   showing where to cut/fold to separate them.
+
+## Locations tree auto-expand
+
+Visiting the Locations tree page (`http://localhost:3100/locations`)
+automatically clicks Homebox's own "expand all" button for you, so nested
+locations are fully expanded on load instead of requiring a manual click.
+
+## If your Homebox runs somewhere other than localhost:3100
+
+Edit `manifest.json` and add your host to both `host_permissions` and the
+`content_scripts.matches` array, e.g. for `https://homebox.example.com`:
+
+```json
+"host_permissions": ["https://homebox.example.com/*"],
+"content_scripts": [{
+  "matches": ["https://homebox.example.com/location/*"],
+  "js": ["content.js"]
+}]
+```
+
+Then reload the extension from `chrome://extensions` (click the refresh
+icon on the extension's card).
+
+## How it works / limitations
+
+- The button reads (scrapes) whatever's already rendered on the location
+  page - the location's name, its parent breadcrumb link, and any listed
+  items - rather than calling Homebox's API. This means it needs no login
+  token and works regardless of your Homebox version's exact API shape,
+  but it also means scraping can occasionally miss text if a future
+  Homebox UI update changes its layout significantly. Because everything
+  is editable before printing, this is always recoverable by hand.
+- The QR code encodes the current page's URL, so scanning it opens that
+  exact location page in Homebox.
+- No data leaves your browser - everything happens locally, and the QR
+  library (`vendor/qrcode.min.js`, MIT licensed, by Kazuhiko Arase) is
+  bundled directly rather than loaded from a CDN.
