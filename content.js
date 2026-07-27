@@ -95,6 +95,14 @@
     return Array.from(seen.values());
   }
 
+  // First uploaded photo, if any - Homebox's photo <img> src already embeds
+  // a short-lived access_token query param, so it's a self-contained URL
+  // our extension pages can just reuse directly (no separate auth needed).
+  function getFirstPhotoUrl() {
+    const img = Array.from(document.querySelectorAll('img[src*="/attachments/"]')).find(isVisible);
+    return img ? img.src : '';
+  }
+
   // Best-effort scrape of the currently rendered location page. Because the
   // exact DOM/class names can change between Homebox versions, everything
   // scraped here is shown in an EDITABLE form on the print page - so
@@ -109,7 +117,8 @@
       name: getLocationName(),
       parentName: parent ? parent.name : '',
       parentHref: parent ? parent.href : '',
-      items: scrapeItems()
+      items: scrapeItems(),
+      photoUrl: getFirstPhotoUrl()
     };
   }
 

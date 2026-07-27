@@ -53,6 +53,16 @@ upright/normal, so it reads correctly on the box after that turn.
    each physical 8.5in x 11in sheet, with a dashed guide down the middle
    showing where to cut/fold to separate them.
 
+## Photo
+
+If the location has a photo uploaded in Homebox, its first photo is pulled
+in automatically as a thumbnail on the label (a real mnemonic - much more
+useful for spotting the right bin/shelf at a glance than a generic icon).
+The "Photo URL" field on the print page is editable/clearable like the
+other fields; leave it blank to omit the photo. If the photo fails to load
+(e.g. its access token expired while you were reviewing the label), it's
+silently hidden rather than showing a broken-image icon.
+
 ## Locations tree auto-expand
 
 Visiting the Locations tree page (`http://localhost:3100/locations`)

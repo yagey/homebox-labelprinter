@@ -142,6 +142,8 @@
       <input type="text" data-field="url" value="${escapeAttr(data.url || '')}">
       <label>Contents (one per line)</label>
       <textarea data-field="items">${escapeHtml((data.items || []).join('\n'))}</textarea>
+      <label>Photo URL (optional - blank to omit)</label>
+      <input type="text" data-field="photo" value="${escapeAttr(data.photoUrl || '')}">
     `;
 
     const labelPage = document.createElement('div');
@@ -149,6 +151,7 @@
     labelPage.innerHTML = `
       <div class="label-qr"></div>
       <div class="label-text">
+        <img class="label-photo" alt="">
         <div class="label-name"></div>
         <div class="label-parent"></div>
         <div class="label-contents-title">Contents</div>
@@ -164,6 +167,7 @@
     const parentIn = panel.querySelector('[data-field="parent"]');
     const urlIn = panel.querySelector('[data-field="url"]');
     const itemsIn = panel.querySelector('[data-field="items"]');
+    const photoIn = panel.querySelector('[data-field="photo"]');
     const parentStatus = panel.querySelector('[data-field="parent-status"]');
 
     const labelText = labelPage.querySelector('.label-text');
@@ -171,6 +175,8 @@
     const labelParent = labelPage.querySelector('.label-parent');
     const labelContents = labelPage.querySelector('.label-contents');
     const labelQr = labelPage.querySelector('.label-qr');
+    const labelPhoto = labelPage.querySelector('.label-photo');
+    labelPhoto.addEventListener('error', () => { labelPhoto.style.display = 'none'; });
 
     function renderContents(lines, hiddenCount) {
       labelContents.innerHTML = '';
@@ -197,6 +203,13 @@
     function refresh() {
       labelName.textContent = nameIn.value || '(unnamed location)';
       labelParent.textContent = parentIn.value ? ('Located in: ' + parentIn.value) : '';
+      if (photoIn.value.trim()) {
+        labelPhoto.src = photoIn.value.trim();
+        labelPhoto.style.display = 'block';
+      } else {
+        labelPhoto.style.display = 'none';
+        labelPhoto.removeAttribute('src');
+      }
 
       const lines = itemsIn.value.split('\n').map(s => s.trim()).filter(Boolean);
       renderContents(lines, 0);
@@ -204,7 +217,7 @@
       fitToPage(labelPage, labelText, itemsIn, renderContents);
     }
 
-    [nameIn, parentIn, urlIn, itemsIn].forEach(el => el.addEventListener('input', refresh));
+    [nameIn, parentIn, urlIn, itemsIn, photoIn].forEach(el => el.addEventListener('input', refresh));
     refresh();
 
     if (data.parentHref) {

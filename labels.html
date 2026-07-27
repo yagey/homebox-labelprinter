@@ -74,6 +74,14 @@
   }
   .label-qr svg { width: 2.2in; height: 2.2in; }
   .label-text { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .label-photo {
+    display: none;
+    max-width: 100%;
+    max-height: calc(1.3in * var(--label-scale));
+    object-fit: cover;
+    border-radius: 6px;
+    margin: 0 auto calc(8px * var(--label-scale));
+  }
   .label-name { font-size: calc(38px * var(--label-scale)); font-weight: 700; line-height: 1.15; text-align: center; word-break: break-word; }
   .label-parent { font-size: calc(16px * var(--label-scale)); color: #444; margin-top: calc(8px * var(--label-scale)); word-break: break-word; }
   .parent-status { font-size: 0.7rem; color: #888; font-style: italic; margin-left: 6px; }

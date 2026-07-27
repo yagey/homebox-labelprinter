@@ -103,6 +103,14 @@
     min-width: 0;
     min-height: 0;
   }
+  #label-photo {
+    display: none; /* toggled on via JS if a photo URL was scraped */
+    max-width: 100%;
+    max-height: calc(1.3in * var(--label-scale));
+    object-fit: cover;
+    border-radius: 6px;
+    margin: 0 auto calc(8px * var(--label-scale));
+  }
   #label-name {
     font-size: calc(38px * var(--label-scale));
     font-weight: 700;
@@ -166,6 +174,9 @@
     <label for="in-items">Contents (one item per line)</label>
     <textarea id="in-items"></textarea>
 
+    <label for="in-photo">Photo URL (optional - blank to omit)</label>
+    <input type="text" id="in-photo">
+
     <button id="print-btn">Print label</button>
   </div>
 
@@ -173,6 +184,7 @@
     <div id="label-page">
       <div id="label-qr"></div>
       <div id="label-text">
+        <img id="label-photo" alt="">
         <div id="label-name"></div>
         <div id="label-parent"></div>
         <div id="label-contents-title">Contents</div>

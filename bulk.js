@@ -103,7 +103,13 @@
         }
         const items = Array.from(seen.values());
 
-        return { url: location.href, locationId, name, parentName, parentHref, items };
+        // First uploaded photo, if any - the <img> src already embeds a
+        // short-lived access_token query param, so it's a self-contained
+        // URL our extension pages can reuse directly.
+        const photoImg = Array.from(document.querySelectorAll('img[src*="/attachments/"]')).find(isVisible);
+        const photoUrl = photoImg ? photoImg.src : '';
+
+        return { url: location.href, locationId, name, parentName, parentHref, items, photoUrl };
       }
 
       let tries = 0;
@@ -143,7 +149,7 @@
       });
       data = result;
     } catch (e) {
-      data = { url: loc.url, locationId: loc.id, name: loc.name, parentName: '', parentHref: '', items: [] };
+      data = { url: loc.url, locationId: loc.id, name: loc.name, parentName: '', parentHref: '', items: [], photoUrl: '' };
     }
     try { await chrome.tabs.remove(tab.id); } catch (e) { /* ignore */ }
     return data;

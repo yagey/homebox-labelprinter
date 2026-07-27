@@ -4,6 +4,7 @@
     parent: document.getElementById('in-parent'),
     url: document.getElementById('in-url'),
     items: document.getElementById('in-items'),
+    photo: document.getElementById('in-photo'),
     printBtn: document.getElementById('print-btn'),
     labelPage: document.getElementById('label-page'),
     labelName: document.getElementById('label-name'),
@@ -11,8 +12,26 @@
     labelText: document.getElementById('label-text'),
     labelContents: document.getElementById('label-contents'),
     labelQr: document.getElementById('label-qr'),
+    labelPhoto: document.getElementById('label-photo'),
     parentStatus: document.getElementById('parent-status')
   };
+
+  // Homebox photo URLs embed a short-lived access_token - if it's expired
+  // or the URL is otherwise bad, just hide the image rather than showing a
+  // broken-image icon on the label.
+  els.labelPhoto.addEventListener('error', () => {
+    els.labelPhoto.style.display = 'none';
+  });
+
+  function renderPhoto(url) {
+    if (!url) {
+      els.labelPhoto.style.display = 'none';
+      els.labelPhoto.removeAttribute('src');
+      return;
+    }
+    els.labelPhoto.src = url;
+    els.labelPhoto.style.display = 'block';
+  }
 
   function renderQr(text) {
     els.labelQr.innerHTML = '';
@@ -95,6 +114,7 @@
   function renderLabel() {
     els.labelName.textContent = els.name.value || '(unnamed location)';
     els.labelParent.textContent = els.parent.value ? ('Located in: ' + els.parent.value) : '';
+    renderPhoto(els.photo.value.trim());
 
     const lines = els.items.value.split('\n').map(s => s.trim()).filter(Boolean);
     renderContents(lines, 0);
@@ -184,6 +204,7 @@
     els.parent.value = data.parentName || '';
     els.url.value = data.url || '';
     els.items.value = (data.items || []).join('\n');
+    els.photo.value = data.photoUrl || '';
     renderLabel();
 
     if (data.parentHref) {
@@ -199,7 +220,7 @@
     }
   }
 
-  [els.name, els.parent, els.url, els.items].forEach(el => {
+  [els.name, els.parent, els.url, els.items, els.photo].forEach(el => {
     el.addEventListener('input', renderLabel);
   });
 
