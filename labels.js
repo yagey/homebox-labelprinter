@@ -14,6 +14,49 @@
     }
   }
 
+  // Generated mnemonic icon (no real photo needed, no network calls) - see
+  // print.js for the full rationale, same lookup table duplicated here.
+  const MNEMONIC_KEYWORDS = [
+    [['beer', 'brew', 'wine', 'liquor', 'bar cart'], '🍺'],
+    [['kitchen', 'cook', 'pan', 'pot', 'dish', 'utensil'], '🍳'],
+    [['tool', 'wrench', 'screwdriver', 'hammer', 'drill', 'saw'], '🔧'],
+    [['cable', 'wire', 'electronic', 'charger', 'adapter', 'circuit'], '🔌'],
+    [['cloth', 'shirt', 'jacket', 'shoe', 'sock', 'closet', 'apparel'], '👕'],
+    [['paint', 'brush', 'craft', 'art', 'yarn', 'fabric'], '🎨'],
+    [['car', 'garage', 'auto', 'tire', 'oil'], '🚗'],
+    [['food', 'snack', 'can', 'pantry', 'grocery'], '🥫'],
+    [['medicine', 'med', 'first aid', 'pill', 'bandage'], '💊'],
+    [['camera', 'photo', 'lens'], '📷'],
+    [['game', 'toy', 'puzzle', 'lego'], '🎮'],
+    [['book', 'document', 'paper', 'office', 'file'], '📚'],
+    [['holiday', 'christmas', 'decoration', 'ornament'], '🎄'],
+    [['garden', 'plant', 'seed', 'soil', 'lawn'], '🌱'],
+    [['clean', 'soap', 'detergent', 'vacuum', 'broom'], '🧹'],
+    [['sport', 'ball', 'bike', 'camp', 'outdoor'], '⚽'],
+    [['bath', 'towel', 'shampoo', 'toiletry'], '🧴'],
+    [['light', 'lamp', 'bulb', 'lighting'], '💡'],
+    [['pet', 'dog', 'cat', 'leash', 'litter'], '🐾'],
+    [['shelf', 'bin', 'box', 'container', 'storage'], '📦']
+  ];
+  const MNEMONIC_DEFAULT_EMOJI = '📦';
+  const MNEMONIC_PALETTE = ['#FDE68A', '#BFDBFE', '#FBCFE8', '#BBF7D0', '#DDD6FE', '#FECACA', '#FED7AA', '#A7F3D0'];
+
+  function renderMnemonic(el, name, items) {
+    const text = ((name || '') + ' ' + items.join(' ')).toLowerCase();
+    let emoji = MNEMONIC_DEFAULT_EMOJI;
+    for (const [keywords, e] of MNEMONIC_KEYWORDS) {
+      if (keywords.some(k => text.includes(k))) {
+        emoji = e;
+        break;
+      }
+    }
+    let hash = 0;
+    const n = name || '';
+    for (let i = 0; i < n.length; i++) hash = (hash * 31 + n.charCodeAt(i)) >>> 0;
+    el.textContent = emoji;
+    el.style.background = MNEMONIC_PALETTE[hash % MNEMONIC_PALETTE.length];
+  }
+
   function waitForTabComplete(tabId) {
     return new Promise((resolve) => {
       function listener(updatedTabId, info) {
@@ -149,7 +192,10 @@
     const labelPage = document.createElement('div');
     labelPage.className = 'label-page';
     labelPage.innerHTML = `
-      <div class="label-qr"></div>
+      <div class="label-left-col">
+        <div class="label-qr"></div>
+        <div class="label-mnemonic"></div>
+      </div>
       <div class="label-text">
         <img class="label-photo" alt="">
         <div class="label-name"></div>
@@ -176,6 +222,7 @@
     const labelContents = labelPage.querySelector('.label-contents');
     const labelQr = labelPage.querySelector('.label-qr');
     const labelPhoto = labelPage.querySelector('.label-photo');
+    const labelMnemonic = labelPage.querySelector('.label-mnemonic');
     labelPhoto.addEventListener('error', () => { labelPhoto.style.display = 'none'; });
 
     function renderContents(lines, hiddenCount) {
@@ -214,6 +261,7 @@
       const lines = itemsIn.value.split('\n').map(s => s.trim()).filter(Boolean);
       renderContents(lines, 0);
       renderQr(labelQr, urlIn.value);
+      renderMnemonic(labelMnemonic, nameIn.value, lines);
       fitToPage(labelPage, labelText, itemsIn, renderContents);
     }
 

@@ -63,6 +63,16 @@ other fields; leave it blank to omit the photo. If the photo fails to load
 (e.g. its access token expired while you were reviewing the label), it's
 silently hidden rather than showing a broken-image icon.
 
+## Mnemonic icon
+
+Below the QR code, every label also gets a small colored icon - a fun,
+fully local (no network calls) visual aid: an emoji picked by matching
+keywords in the location name/contents (e.g. "Beer Brewing" -> 🍺, a
+location full of cables -> 🔌, falling back to 📦), on a deterministic
+pastel background so the same location always gets the same look. This is
+separate from the real photo above (if any) - it's not meant to be
+precise, just a quick visual anchor.
+
 ## Locations tree auto-expand
 
 Visiting the Locations tree page (`http://localhost:3100/locations`)

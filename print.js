@@ -13,6 +13,7 @@
     labelContents: document.getElementById('label-contents'),
     labelQr: document.getElementById('label-qr'),
     labelPhoto: document.getElementById('label-photo'),
+    labelMnemonic: document.getElementById('label-mnemonic'),
     parentStatus: document.getElementById('parent-status')
   };
 
@@ -31,6 +32,56 @@
     }
     els.labelPhoto.src = url;
     els.labelPhoto.style.display = 'block';
+  }
+
+  // Generated mnemonic icon (no real photo needed, no network calls): a
+  // deterministic keyword -> emoji match against the name/contents, on a
+  // deterministic pastel background so the same location always looks the
+  // same. Purely a visual memory aid, not meant to be precise.
+  const MNEMONIC_KEYWORDS = [
+    [['beer', 'brew', 'wine', 'liquor', 'bar cart'], '🍺'],
+    [['kitchen', 'cook', 'pan', 'pot', 'dish', 'utensil'], '🍳'],
+    [['tool', 'wrench', 'screwdriver', 'hammer', 'drill', 'saw'], '🔧'],
+    [['cable', 'wire', 'electronic', 'charger', 'adapter', 'circuit'], '🔌'],
+    [['cloth', 'shirt', 'jacket', 'shoe', 'sock', 'closet', 'apparel'], '👕'],
+    [['paint', 'brush', 'craft', 'art', 'yarn', 'fabric'], '🎨'],
+    [['car', 'garage', 'auto', 'tire', 'oil'], '🚗'],
+    [['food', 'snack', 'can', 'pantry', 'grocery'], '🥫'],
+    [['medicine', 'med', 'first aid', 'pill', 'bandage'], '💊'],
+    [['camera', 'photo', 'lens'], '📷'],
+    [['game', 'toy', 'puzzle', 'lego'], '🎮'],
+    [['book', 'document', 'paper', 'office', 'file'], '📚'],
+    [['holiday', 'christmas', 'decoration', 'ornament'], '🎄'],
+    [['garden', 'plant', 'seed', 'soil', 'lawn'], '🌱'],
+    [['clean', 'soap', 'detergent', 'vacuum', 'broom'], '🧹'],
+    [['sport', 'ball', 'bike', 'camp', 'outdoor'], '⚽'],
+    [['bath', 'towel', 'shampoo', 'toiletry'], '🧴'],
+    [['light', 'lamp', 'bulb', 'lighting'], '💡'],
+    [['pet', 'dog', 'cat', 'leash', 'litter'], '🐾'],
+    [['shelf', 'bin', 'box', 'container', 'storage'], '📦']
+  ];
+  const MNEMONIC_DEFAULT_EMOJI = '📦';
+  const MNEMONIC_PALETTE = ['#FDE68A', '#BFDBFE', '#FBCFE8', '#BBF7D0', '#DDD6FE', '#FECACA', '#FED7AA', '#A7F3D0'];
+
+  function getMnemonicIcon(name, items) {
+    const text = (name + ' ' + items.join(' ')).toLowerCase();
+    let emoji = MNEMONIC_DEFAULT_EMOJI;
+    for (const [keywords, e] of MNEMONIC_KEYWORDS) {
+      if (keywords.some(k => text.includes(k))) {
+        emoji = e;
+        break;
+      }
+    }
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+    const color = MNEMONIC_PALETTE[hash % MNEMONIC_PALETTE.length];
+    return { emoji, color };
+  }
+
+  function renderMnemonic(name, items) {
+    const { emoji, color } = getMnemonicIcon(name || '', items);
+    els.labelMnemonic.textContent = emoji;
+    els.labelMnemonic.style.background = color;
   }
 
   function renderQr(text) {
@@ -119,6 +170,7 @@
     const lines = els.items.value.split('\n').map(s => s.trim()).filter(Boolean);
     renderContents(lines, 0);
     renderQr(els.url.value);
+    renderMnemonic(els.name.value, lines);
     fitToPage(lines);
   }
 

@@ -86,16 +86,36 @@
     border: 1px solid #999;
     padding: 0.35in;
     display: flex;
+    align-items: flex-start; /* QR/mnemonic column sits at the top, not vertically centered */
     gap: 0.3in;
     overflow: hidden; /* hard guarantee: content can never spill onto a 2nd printed page */
   }
-  #label-qr {
+  #label-left-col {
     flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15in;
+  }
+  #label-qr {
     display: flex;
     align-items: center;
     justify-content: center;
   }
   #label-qr svg { width: 2.2in; height: 2.2in; }
+  /* Fixed size (not tied to --label-scale) - keeping the QR/icon column's
+     size independent of the text-shrink logic avoids the overflow risk of
+     two separate growth mechanisms fighting each other. */
+  #label-mnemonic {
+    width: 1.6in;
+    height: 1.6in;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9in;
+    line-height: 1;
+  }
   #label-text {
     flex: 1;
     display: flex;
@@ -182,7 +202,10 @@
 
   <div id="print-sheet">
     <div id="label-page">
-      <div id="label-qr"></div>
+      <div id="label-left-col">
+        <div id="label-qr"></div>
+        <div id="label-mnemonic"></div>
+      </div>
       <div id="label-text">
         <img id="label-photo" alt="">
         <div id="label-name"></div>
