@@ -2,6 +2,23 @@
 // Runs on Homebox location pages (http://localhost:3100/location/<uuid>)
 
 (function () {
+  // TEMPORARY: QR codes need to be scannable from a phone, so they can't
+  // point at "localhost" - until the real domain name is working, point
+  // them at this Tailscale IP instead. Only affects the QR target URL (the
+  // ancestor-tree background-tab walk still uses the normal browsing
+  // origin). To revert: delete this constant and change toQrUrl() to just
+  // `return pageUrl;`.
+  const QR_BASE_URL = 'http://100.95.81.40:3100';
+
+  function toQrUrl(pageUrl) {
+    try {
+      const u = new URL(pageUrl);
+      return QR_BASE_URL + u.pathname + u.search + u.hash;
+    } catch (e) {
+      return pageUrl;
+    }
+  }
+
   const NAV_TEXT_BLACKLIST = new Set([
     'Home', 'Locations', 'Search', 'Profile', 'Tools', 'Sign Out', 'Create',
     'Item / Asset', 'Location', 'Label', 'Welcome', 'HomeB x', 'Items',
@@ -112,11 +129,11 @@
     const parent = getParentLink(locationId);
 
     return {
-      url: window.location.href,
+      url: toQrUrl(window.location.href),
       locationId,
       name: getLocationName(),
       parentName: parent ? parent.name : '',
-      parentHref: parent ? parent.href : '',
+      parentHref: parent ? parent.href : '', // NOT rewritten - used for the ancestor-walk, must stay on the real browsing origin
       items: scrapeItems(),
       photoUrl: getFirstPhotoUrl()
     };

@@ -73,6 +73,16 @@ pastel background so the same location always gets the same look. This is
 separate from the real photo above (if any) - it's not meant to be
 precise, just a quick visual anchor.
 
+## QR code base URL override (temporary)
+
+QR codes need to be scannable from a phone, so they can't point at
+`localhost`. Right now `content.js` and `bulk.js` both hardcode
+`QR_BASE_URL = 'http://100.95.81.40:3100'` (a Tailscale IP) as a stand-in
+until the real domain name is working. This only rewrites the *QR target*
+URL - the page you're actually browsing, and the ancestor-tree background
+walk, are unaffected. To revert once the domain is fixed: search both files
+for `QR_BASE_URL` and change `toQrUrl()` to `return pageUrl;`.
+
 ## Locations tree auto-expand
 
 Visiting the Locations tree page (`http://localhost:3100/locations`)
