@@ -112,12 +112,18 @@
     return Array.from(seen.values());
   }
 
-  // First uploaded photo, if any - Homebox's photo <img> src already embeds
+  // All uploaded photos, if any - Homebox's photo <img> src already embeds
   // a short-lived access_token query param, so it's a self-contained URL
   // our extension pages can just reuse directly (no separate auth needed).
-  function getFirstPhotoUrl() {
-    const img = Array.from(document.querySelectorAll('img[src*="/attachments/"]')).find(isVisible);
-    return img ? img.src : '';
+  function getPhotoUrls() {
+    const seen = new Set();
+    const urls = [];
+    for (const img of document.querySelectorAll('img[src*="/attachments/"]')) {
+      if (!isVisible(img) || seen.has(img.src)) continue;
+      seen.add(img.src);
+      urls.push(img.src);
+    }
+    return urls;
   }
 
   // Best-effort scrape of the currently rendered location page. Because the
@@ -135,7 +141,7 @@
       parentName: parent ? parent.name : '',
       parentHref: parent ? parent.href : '', // NOT rewritten - used for the ancestor-walk, must stay on the real browsing origin
       items: scrapeItems(),
-      photoUrl: getFirstPhotoUrl()
+      photoUrls: getPhotoUrls()
     };
   }
 

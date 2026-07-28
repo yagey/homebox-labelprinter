@@ -4,7 +4,7 @@
     parent: document.getElementById('in-parent'),
     url: document.getElementById('in-url'),
     items: document.getElementById('in-items'),
-    photo: document.getElementById('in-photo'),
+    photos: document.getElementById('in-photos'),
     printBtn: document.getElementById('print-btn'),
     labelPage: document.getElementById('label-page'),
     labelName: document.getElementById('label-name'),
@@ -12,32 +12,31 @@
     labelText: document.getElementById('label-text'),
     labelContents: document.getElementById('label-contents'),
     labelQr: document.getElementById('label-qr'),
-    labelPhoto: document.getElementById('label-photo'),
+    labelPhotos: document.getElementById('label-photos'),
     labelMnemonic: document.getElementById('label-mnemonic'),
     parentStatus: document.getElementById('parent-status')
   };
 
-  // Homebox photo URLs embed a short-lived access_token - if it's expired
-  // or the URL is otherwise bad, just hide the image rather than showing a
-  // broken-image icon on the label.
-  els.labelPhoto.addEventListener('error', () => {
-    els.labelPhoto.style.display = 'none';
-  });
-  // The photo loads asynchronously, so fitToPage's measurement at render
-  // time can run before the image has a real height - re-run the fit once
-  // it actually loads so a big photo doesn't push text past the fold line
-  // undetected. Setting src to an unchanged value is a no-op in browsers,
-  // so this can't loop.
-  els.labelPhoto.addEventListener('load', () => renderLabel());
-
-  function renderPhoto(url) {
-    if (!url) {
-      els.labelPhoto.style.display = 'none';
-      els.labelPhoto.removeAttribute('src');
+  // Each thumbnail gets an explicit height from CSS (100% of the fixed-height
+  // strip) before it even loads, so - unlike the single-photo version this
+  // replaced - there's no async-load race to guard against here; only a
+  // per-image error handler is needed (Homebox photo URLs embed a
+  // short-lived access_token - if it's expired, hide just that thumbnail
+  // rather than showing a broken-image icon).
+  function renderPhotos(urls) {
+    els.labelPhotos.innerHTML = '';
+    if (!urls.length) {
+      els.labelPhotos.style.display = 'none';
       return;
     }
-    els.labelPhoto.src = url;
-    els.labelPhoto.style.display = 'block';
+    els.labelPhotos.style.display = 'flex';
+    for (const url of urls) {
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = '';
+      img.addEventListener('error', () => { img.style.display = 'none'; });
+      els.labelPhotos.appendChild(img);
+    }
   }
 
   // Generated mnemonic icon (no real photo needed, no network calls): a
@@ -171,7 +170,7 @@
   function renderLabel() {
     els.labelName.textContent = els.name.value || '(unnamed location)';
     els.labelParent.textContent = els.parent.value ? ('Located in: ' + els.parent.value) : '';
-    renderPhoto(els.photo.value.trim());
+    renderPhotos(els.photos.value.split('\n').map(s => s.trim()).filter(Boolean));
 
     const lines = els.items.value.split('\n').map(s => s.trim()).filter(Boolean);
     renderContents(lines, 0);
@@ -262,7 +261,7 @@
     els.parent.value = data.parentName || '';
     els.url.value = data.url || '';
     els.items.value = (data.items || []).join('\n');
-    els.photo.value = data.photoUrl || '';
+    els.photos.value = (data.photoUrls || []).join('\n');
     renderLabel();
 
     if (data.parentHref) {
@@ -278,7 +277,7 @@
     }
   }
 
-  [els.name, els.parent, els.url, els.items, els.photo].forEach(el => {
+  [els.name, els.parent, els.url, els.items, els.photos].forEach(el => {
     el.addEventListener('input', renderLabel);
   });
 

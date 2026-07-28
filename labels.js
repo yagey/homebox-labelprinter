@@ -185,8 +185,8 @@
       <input type="text" data-field="url" value="${escapeAttr(data.url || '')}">
       <label>Contents (one per line)</label>
       <textarea data-field="items">${escapeHtml((data.items || []).join('\n'))}</textarea>
-      <label>Photo URL (optional - blank to omit)</label>
-      <input type="text" data-field="photo" value="${escapeAttr(data.photoUrl || '')}">
+      <label>Photo URLs (optional - one per line, blank to omit)</label>
+      <textarea data-field="photos">${escapeHtml((data.photoUrls || []).join('\n'))}</textarea>
     `;
 
     const labelPage = document.createElement('div');
@@ -197,7 +197,7 @@
         <div class="label-mnemonic"></div>
       </div>
       <div class="label-text">
-        <img class="label-photo" alt="">
+        <div class="label-photos"></div>
         <div class="label-name"></div>
         <div class="label-parent"></div>
         <div class="label-contents-title">Contents</div>
@@ -213,7 +213,7 @@
     const parentIn = panel.querySelector('[data-field="parent"]');
     const urlIn = panel.querySelector('[data-field="url"]');
     const itemsIn = panel.querySelector('[data-field="items"]');
-    const photoIn = panel.querySelector('[data-field="photo"]');
+    const photosIn = panel.querySelector('[data-field="photos"]');
     const parentStatus = panel.querySelector('[data-field="parent-status"]');
 
     const labelText = labelPage.querySelector('.label-text');
@@ -221,12 +221,27 @@
     const labelParent = labelPage.querySelector('.label-parent');
     const labelContents = labelPage.querySelector('.label-contents');
     const labelQr = labelPage.querySelector('.label-qr');
-    const labelPhoto = labelPage.querySelector('.label-photo');
+    const labelPhotos = labelPage.querySelector('.label-photos');
     const labelMnemonic = labelPage.querySelector('.label-mnemonic');
-    labelPhoto.addEventListener('error', () => { labelPhoto.style.display = 'none'; });
-    // Photo loads asynchronously - re-run the fit once it actually loads so
-    // a big photo doesn't push text past the fold line undetected.
-    labelPhoto.addEventListener('load', () => refresh());
+
+    // Each thumbnail gets an explicit height from CSS before it even loads,
+    // so no async-load race guard is needed here - just a per-image error
+    // handler (see print.js for the full rationale).
+    function renderPhotos(urls) {
+      labelPhotos.innerHTML = '';
+      if (!urls.length) {
+        labelPhotos.style.display = 'none';
+        return;
+      }
+      labelPhotos.style.display = 'flex';
+      urls.forEach(url => {
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = '';
+        img.addEventListener('error', () => { img.style.display = 'none'; });
+        labelPhotos.appendChild(img);
+      });
+    }
 
     function renderContents(lines, hiddenCount) {
       labelContents.innerHTML = '';
@@ -253,13 +268,7 @@
     function refresh() {
       labelName.textContent = nameIn.value || '(unnamed location)';
       labelParent.textContent = parentIn.value ? ('Located in: ' + parentIn.value) : '';
-      if (photoIn.value.trim()) {
-        labelPhoto.src = photoIn.value.trim();
-        labelPhoto.style.display = 'block';
-      } else {
-        labelPhoto.style.display = 'none';
-        labelPhoto.removeAttribute('src');
-      }
+      renderPhotos(photosIn.value.split('\n').map(s => s.trim()).filter(Boolean));
 
       const lines = itemsIn.value.split('\n').map(s => s.trim()).filter(Boolean);
       renderContents(lines, 0);
@@ -268,7 +277,7 @@
       fitToPage(labelPage, labelText, itemsIn, renderContents);
     }
 
-    [nameIn, parentIn, urlIn, itemsIn, photoIn].forEach(el => el.addEventListener('input', refresh));
+    [nameIn, parentIn, urlIn, itemsIn, photosIn].forEach(el => el.addEventListener('input', refresh));
     refresh();
 
     if (data.parentHref) {

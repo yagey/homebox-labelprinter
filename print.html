@@ -124,17 +124,23 @@
     min-width: 0;
     min-height: 0;
   }
-  #label-photo {
-    display: none; /* toggled on via JS if a photo URL was scraped */
-    /* Fixed box (not just a max) so fitToPage's very first measurement -
-       taken before the image has loaded and has real intrinsic dimensions -
-       is already accurate. object-fit:cover crops to fill this box
-       regardless of the source photo's own aspect ratio. */
-    width: calc(2.2in * var(--label-scale));
+  /* Strip of 1+ photo thumbnails, side by side. Fixed height (not just a
+     max) so fitToPage's very first measurement - taken before any image
+     has loaded and has real intrinsic dimensions - is already accurate.
+     Each thumbnail's width comes from flex:1 (pure layout math, independent
+     of image load state), so the same guarantee holds per-thumbnail too. */
+  #label-photos {
+    display: none; /* toggled on via JS if any photo URLs were scraped */
+    gap: calc(4px * var(--label-scale));
     height: calc(1.3in * var(--label-scale));
+    margin: 0 0 calc(8px * var(--label-scale));
+  }
+  #label-photos img {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 100%;
     object-fit: cover;
     border-radius: 6px;
-    margin: 0 auto calc(8px * var(--label-scale));
   }
   #label-name {
     font-size: calc(38px * var(--label-scale));
@@ -199,8 +205,8 @@
     <label for="in-items">Contents (one item per line)</label>
     <textarea id="in-items"></textarea>
 
-    <label for="in-photo">Photo URL (optional - blank to omit)</label>
-    <input type="text" id="in-photo">
+    <label for="in-photos">Photo URLs (optional - one per line, blank to omit)</label>
+    <textarea id="in-photos"></textarea>
 
     <button id="print-btn">Print label</button>
   </div>
@@ -212,7 +218,7 @@
         <div id="label-mnemonic"></div>
       </div>
       <div id="label-text">
-        <img id="label-photo" alt="">
+        <div id="label-photos"></div>
         <div id="label-name"></div>
         <div id="label-parent"></div>
         <div id="label-contents-title">Contents</div>
