@@ -118,6 +118,7 @@
   }
   #label-text {
     flex: 1;
+    align-self: stretch; /* #label-page uses align-items:flex-start (to pin the QR column to the top), which would otherwise also shrink this box to its own content height instead of the full 4.8in budget - breaking fitToPage's overflow check entirely */
     display: flex;
     flex-direction: column;
     min-width: 0;
