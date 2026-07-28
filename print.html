@@ -125,8 +125,12 @@
   }
   #label-photo {
     display: none; /* toggled on via JS if a photo URL was scraped */
-    max-width: 100%;
-    max-height: calc(1.3in * var(--label-scale));
+    /* Fixed box (not just a max) so fitToPage's very first measurement -
+       taken before the image has loaded and has real intrinsic dimensions -
+       is already accurate. object-fit:cover crops to fill this box
+       regardless of the source photo's own aspect ratio. */
+    width: calc(2.2in * var(--label-scale));
+    height: calc(1.3in * var(--label-scale));
     object-fit: cover;
     border-radius: 6px;
     margin: 0 auto calc(8px * var(--label-scale));
