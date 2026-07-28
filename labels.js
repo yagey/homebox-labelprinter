@@ -224,6 +224,9 @@
     const labelPhoto = labelPage.querySelector('.label-photo');
     const labelMnemonic = labelPage.querySelector('.label-mnemonic');
     labelPhoto.addEventListener('error', () => { labelPhoto.style.display = 'none'; });
+    // Photo loads asynchronously - re-run the fit once it actually loads so
+    // a big photo doesn't push text past the fold line undetected.
+    labelPhoto.addEventListener('load', () => refresh());
 
     function renderContents(lines, hiddenCount) {
       labelContents.innerHTML = '';

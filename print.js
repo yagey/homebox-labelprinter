@@ -23,6 +23,12 @@
   els.labelPhoto.addEventListener('error', () => {
     els.labelPhoto.style.display = 'none';
   });
+  // The photo loads asynchronously, so fitToPage's measurement at render
+  // time can run before the image has a real height - re-run the fit once
+  // it actually loads so a big photo doesn't push text past the fold line
+  // undetected. Setting src to an unchanged value is a no-op in browsers,
+  // so this can't loop.
+  els.labelPhoto.addEventListener('load', () => renderLabel());
 
   function renderPhoto(url) {
     if (!url) {
