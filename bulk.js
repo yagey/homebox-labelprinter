@@ -165,6 +165,29 @@
     return data;
   }
 
+  // Scrapes several locations at once (bounded pool of background tabs)
+  // instead of one at a time - each can now take up to ~15s to hydrate over
+  // a slow connection, so doing them sequentially would be painfully slow
+  // for a large selection. Results are written back by original index so
+  // the output order matches the checked list regardless of completion order.
+  const SCRAPE_CONCURRENCY = 5;
+  async function scrapeAll(locs, onProgress) {
+    const results = new Array(locs.length);
+    let nextIndex = 0;
+    let completed = 0;
+    async function worker() {
+      while (nextIndex < locs.length) {
+        const i = nextIndex++;
+        results[i] = await scrapeOne(locs[i]);
+        completed++;
+        onProgress(completed, locs.length);
+      }
+    }
+    const workers = Array.from({ length: Math.min(SCRAPE_CONCURRENCY, locs.length) }, worker);
+    await Promise.all(workers);
+    return results;
+  }
+
   generateBtn.addEventListener('click', async () => {
     const checked = Array.from(listEl.querySelectorAll('input[type="checkbox"]:checked'))
       .map(cb => tree[Number(cb.dataset.index)]);
@@ -175,12 +198,9 @@
     }
 
     generateBtn.disabled = true;
-    const results = [];
-    for (let i = 0; i < checked.length; i++) {
-      statusEl.textContent = `Scraping ${i + 1} of ${checked.length}: ${checked[i].name}...`;
-      const data = await scrapeOne(checked[i]);
-      results.push(data);
-    }
+    const results = await scrapeAll(checked, (done, total) => {
+      statusEl.textContent = `Scraping ${done} of ${total}...`;
+    });
 
     statusEl.textContent = 'Done. Opening label sheet...';
     chrome.storage.local.set({ hbBulkLabels: results }, () => {
