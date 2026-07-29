@@ -1,5 +1,5 @@
 // Homebox Label Printer - content script
-// Runs on Homebox location pages (http://localhost:3100/location/<uuid>)
+// Runs on Homebox location pages (any host, e.g. https://homebox.example.com/location/<uuid>)
 
 (function () {
   const NAV_TEXT_BLACKLIST = new Set([
@@ -172,9 +172,10 @@
     const bulkBtn = makeBtn('📋  Bulk Print', '#3b6ea5');
     bulkBtn.addEventListener('click', () => {
       // Bulk mode needs the full locations tree, which only the /locations
-      // page renders - so this shortcut just opens that page. The bulk
-      // button injected there (below) takes over from there.
-      chrome.runtime.sendMessage({ type: 'hbOpenPage', page: null, url: 'http://localhost:3100/locations' });
+      // page renders - so this shortcut just opens that page (on whatever
+      // host is actually being browsed). The bulk button injected there
+      // (below) takes over from there.
+      chrome.runtime.sendMessage({ type: 'hbOpenPage', page: null, url: window.location.origin + '/locations' });
     });
 
     group.appendChild(printBtn);
