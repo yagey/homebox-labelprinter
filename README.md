@@ -16,8 +16,8 @@ upright/normal, so it reads correctly on the box after that turn.
 3. Turn on **Developer mode** (top-right toggle).
 4. Click **Load unpacked** and select this folder (the one containing
    `manifest.json`).
-5. Visit any Homebox location page, e.g.
-   `http://localhost:3100/location/<some-id>`.
+5. Visit any Homebox location page (any host - `localhost`, a LAN IP, or your
+   own domain all work with no configuration).
 6. A green **"Print Label"** button appears in the bottom-right corner.
 
 ## Usage
@@ -39,7 +39,7 @@ upright/normal, so it reads correctly on the box after that turn.
 
 ## Bulk mode
 
-1. Go to the Locations tree page (`http://localhost:3100/locations`).
+1. Go to the Locations tree page (`/locations`).
 2. Click the green **"Bulk Print Labels"** button (bottom-right).
 3. Check the locations you want labels for (Select all / Select none helpers
    provided), then click **Generate labels**.
@@ -73,37 +73,20 @@ pastel background so the same location always gets the same look. This is
 separate from the real photo above (if any) - it's not meant to be
 precise, just a quick visual anchor.
 
-## QR code base URL override (temporary)
-
-QR codes need to be scannable from a phone, so they can't point at
-`localhost`. Right now `content.js` and `bulk.js` both hardcode
-`QR_BASE_URL = 'http://100.95.81.40:3100'` (a Tailscale IP) as a stand-in
-until the real domain name is working. This only rewrites the *QR target*
-URL - the page you're actually browsing, and the ancestor-tree background
-walk, are unaffected. To revert once the domain is fixed: search both files
-for `QR_BASE_URL` and change `toQrUrl()` to `return pageUrl;`.
-
 ## Locations tree auto-expand
 
-Visiting the Locations tree page (`http://localhost:3100/locations`)
-automatically clicks Homebox's own "expand all" button for you, so nested
-locations are fully expanded on load instead of requiring a manual click.
+Visiting the Locations tree page (`/locations`) automatically clicks
+Homebox's own "expand all" button for you, so nested locations are fully
+expanded on load instead of requiring a manual click.
 
-## If your Homebox runs somewhere other than localhost:3100
+## Works on any Homebox host - no configuration needed
 
-Edit `manifest.json` and add your host to both `host_permissions` and the
-`content_scripts.matches` array, e.g. for `https://homebox.example.com`:
-
-```json
-"host_permissions": ["https://homebox.example.com/*"],
-"content_scripts": [{
-  "matches": ["https://homebox.example.com/location/*"],
-  "js": ["content.js"]
-}]
-```
-
-Then reload the extension from `chrome://extensions` (click the refresh
-icon on the extension's card).
+The extension matches on URL *path* (`/location/*`, `/locations*`) rather
+than a specific hostname, so it works out of the box whether your Homebox
+is at `localhost`, a LAN IP, a Tailscale address, or your own domain - no
+editing `manifest.json` required. The QR code encodes whatever URL you're
+actually browsing, so scan compatibility from a phone just depends on that
+URL being reachable from the phone's network.
 
 ## How it works / limitations
 

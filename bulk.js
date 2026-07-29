@@ -3,19 +3,6 @@
   const generateBtn = document.getElementById('generate-btn');
   const statusEl = document.getElementById('status');
 
-  // TEMPORARY: see content.js for why - QR codes can't point at
-  // "localhost". Used only in the rare fallback path if script injection
-  // fails; the primary path rewrites inside standaloneScrape() below.
-  const QR_BASE_URL = 'http://100.95.81.40:3100';
-  function toQrUrl(pageUrl) {
-    try {
-      const u = new URL(pageUrl);
-      return QR_BASE_URL + u.pathname + u.search + u.hash;
-    } catch (e) {
-      return pageUrl;
-    }
-  }
-
   let tree = [];
 
   function render() {
@@ -52,20 +39,6 @@
   // serializes and runs this in the target page.
   function standaloneScrape() {
     return new Promise((resolve) => {
-      // TEMPORARY: see content.js for why - QR codes can't point at
-      // "localhost", so rewrite just the QR target URL to this Tailscale
-      // IP until the real domain name is working. Duplicated here because
-      // chrome.scripting.executeScript functions must be fully self-contained.
-      const QR_BASE_URL = 'http://100.95.81.40:3100';
-      function toQrUrl(pageUrl) {
-        try {
-          const u = new URL(pageUrl);
-          return QR_BASE_URL + u.pathname + u.search + u.hash;
-        } catch (e) {
-          return pageUrl;
-        }
-      }
-
       function isVisible(el) {
         if (!el) return false;
         const rect = el.getBoundingClientRect();
@@ -141,7 +114,7 @@
           photoUrls.push(img.src);
         }
 
-        return { url: toQrUrl(location.href), locationId, name, parentName, parentHref, items, photoUrls };
+        return { url: location.href, locationId, name, parentName, parentHref, items, photoUrls };
       }
 
       let tries = 0;
@@ -181,7 +154,7 @@
       });
       data = result;
     } catch (e) {
-      data = { url: toQrUrl(loc.url), locationId: loc.id, name: loc.name, parentName: '', parentHref: '', items: [], photoUrls: [] };
+      data = { url: loc.url, locationId: loc.id, name: loc.name, parentName: '', parentHref: '', items: [], photoUrls: [] };
     }
     try { await chrome.tabs.remove(tab.id); } catch (e) { /* ignore */ }
     return data;
