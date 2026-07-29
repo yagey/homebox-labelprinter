@@ -69,6 +69,15 @@
     });
   }
 
+  // Waits for the tab to report "complete" - but if it's already complete
+  // (no further onUpdated event coming), waitForTabComplete would hang
+  // forever waiting for an event that already happened, so check first.
+  async function ensureTabComplete(tabId) {
+    const tab = await chrome.tabs.get(tabId);
+    if (tab.status === 'complete') return;
+    await waitForTabComplete(tabId);
+  }
+
   // ---- Full ancestor tree resolution (same technique as print.js: hop
   // through each ancestor's own page in a hidden background tab, reading
   // its immediate parent link, until there isn't one). ----
@@ -121,16 +130,28 @@
 
   async function fetchBreadcrumb(url) {
     const tab = await chrome.tabs.create({ url, active: false });
-    await waitForTabComplete(tab.id);
     let result = { name: '', parentName: '', parentHref: '' };
-    try {
-      const [{ result: r }] = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: standaloneGetBreadcrumb
-      });
-      if (r) result = r;
-    } catch (e) {
-      console.error('Failed to resolve ancestor', url, e);
+    // A redirect (auth check, tunnel challenge, etc.) can tear down the
+    // frame right after "complete" fires and just before the script
+    // injection runs, throwing "Frame with ID ... was removed" - retry a
+    // few times, re-checking the tab's actual status each time, rather than
+    // failing outright on that one race.
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        await ensureTabComplete(tab.id);
+        const [{ result: r }] = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: standaloneGetBreadcrumb
+        });
+        if (r) result = r;
+        break;
+      } catch (e) {
+        if (attempt === 3) {
+          console.error('Failed to resolve ancestor', url, e);
+        } else {
+          await new Promise(r => setTimeout(r, 500));
+        }
+      }
     }
     try { await chrome.tabs.remove(tab.id); } catch (e) { /* ignore */ }
     return result;

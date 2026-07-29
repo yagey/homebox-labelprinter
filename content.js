@@ -129,8 +129,16 @@
   }
 
   function injectButton() {
-    if (!getLocationId()) return; // only on single-location pages
-    if (document.getElementById('hb-btn-group')) return;
+    // Homebox is a client-side-routed SPA - navigating away from a location
+    // page (e.g. back to /locations) doesn't reload the page, so the content
+    // script doesn't re-run and this leftover button would otherwise never
+    // get cleaned up, overlapping whatever button belongs on the new route.
+    const existing = document.getElementById('hb-btn-group');
+    if (!getLocationId()) { // only on single-location pages
+      if (existing) existing.remove();
+      return;
+    }
+    if (existing) return;
 
     const group = document.createElement('div');
     group.id = 'hb-btn-group';
@@ -221,8 +229,13 @@
   }
 
   function injectBulkButton() {
-    if (!/\/locations/.test(window.location.pathname)) return;
-    if (document.getElementById('hb-bulk-print-btn')) return;
+    // Same SPA-navigation cleanup concern as injectButton() above.
+    const existing = document.getElementById('hb-bulk-print-btn');
+    if (!/\/locations/.test(window.location.pathname)) {
+      if (existing) existing.remove();
+      return;
+    }
+    if (existing) return;
 
     const btn = document.createElement('button');
     btn.id = 'hb-bulk-print-btn';

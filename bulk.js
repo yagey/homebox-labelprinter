@@ -148,18 +148,35 @@
     });
   }
 
+  // Waits for the tab to report "complete" - but if it's already complete
+  // (no further onUpdated event coming), waitForTabComplete would hang
+  // forever waiting for an event that already happened, so check first.
+  async function ensureTabComplete(tabId) {
+    const tab = await chrome.tabs.get(tabId);
+    if (tab.status === 'complete') return;
+    await waitForTabComplete(tabId);
+  }
+
   async function scrapeOne(loc) {
     const tab = await chrome.tabs.create({ url: loc.url, active: false });
-    await waitForTabComplete(tab.id);
-    let data;
-    try {
-      const [{ result }] = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: standaloneScrape
-      });
-      data = result;
-    } catch (e) {
-      data = { url: loc.url, locationId: loc.id, name: loc.name, parentName: '', parentHref: '', items: [], photoUrls: [] };
+    let data = { url: loc.url, locationId: loc.id, name: loc.name, parentName: '', parentHref: '', items: [], photoUrls: [] };
+    // A redirect (auth check, tunnel challenge, etc.) can tear down the
+    // frame right after "complete" fires and just before the script
+    // injection runs, throwing "Frame with ID ... was removed" - retry a
+    // few times, re-checking the tab's actual status each time, rather than
+    // failing outright on that one race.
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        await ensureTabComplete(tab.id);
+        const [{ result }] = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: standaloneScrape
+        });
+        data = result;
+        break;
+      } catch (e) {
+        if (attempt < 3) await new Promise(r => setTimeout(r, 500));
+      }
     }
     try { await chrome.tabs.remove(tab.id); } catch (e) { /* ignore */ }
     return data;
