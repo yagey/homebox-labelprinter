@@ -56,6 +56,7 @@
      yourself when sliding it into a portrait UPS pouch. */
   .label-page {
     --label-scale: 1;
+    --contents-scale: 1;
     width: 8.5in;
     height: 5.5in;
     background: #fff;
@@ -109,12 +110,14 @@
   .label-name { font-size: calc(38px * var(--label-scale)); font-weight: 700; line-height: 1.15; text-align: center; word-break: break-word; }
   .label-parent { font-size: calc(16px * var(--label-scale)); color: #444; margin-top: calc(8px * var(--label-scale)); word-break: break-word; }
   .parent-status { font-size: 0.7rem; color: #888; font-style: italic; margin-left: 6px; }
+  /* Contents has its own independent scale (--contents-scale) instead of
+     sharing --label-scale with the name/parent - see print.html's comment. */
   .label-contents-title {
-    font-size: calc(13px * var(--label-scale)); text-transform: uppercase; letter-spacing: 0.06em;
-    color: #666; margin-top: calc(18px * var(--label-scale)); border-top: 1px solid #ddd; padding-top: calc(10px * var(--label-scale));
+    font-size: calc(13px * var(--contents-scale)); text-transform: uppercase; letter-spacing: 0.06em;
+    color: #666; margin-top: calc(18px * var(--label-scale)); border-top: 1px solid #ddd; padding-top: calc(10px * var(--contents-scale));
   }
-  .label-contents { font-size: calc(15px * var(--label-scale)); margin-top: calc(6px * var(--label-scale)); column-width: 2.2in; column-gap: 0.25in; }
-  .label-contents div { break-inside: avoid; padding: calc(2px * var(--label-scale)) 0; }
+  .label-contents { font-size: calc(15px * var(--contents-scale)); margin-top: calc(6px * var(--contents-scale)); column-width: calc(2.2in * var(--contents-scale)); column-gap: calc(0.25in * var(--contents-scale)); }
+  .label-contents div { break-inside: avoid; padding: calc(2px * var(--contents-scale)) 0; }
   .label-empty { color: #999; font-style: italic; }
   .label-truncated { color: #888; font-style: italic; margin-top: 4px; }
 

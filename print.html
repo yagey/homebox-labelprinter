@@ -80,6 +80,7 @@
   }
   #label-page {
     --label-scale: 1;
+    --contents-scale: 1;
     width: 8.5in;
     height: 5.5in;
     background: #fff;
@@ -160,22 +161,28 @@
     color: #888;
     font-style: italic;
   }
+  /* Contents has its own independent scale (--contents-scale) instead of
+     sharing --label-scale with the name/parent - a long inventory list
+     should keep shrinking (and packing into narrower columns) on its own
+     once the name/parent have already hit a comfortable minimum size,
+     rather than the list getting truncated while there's still unused
+     scale range being reserved for name/parent. */
   #label-contents-title {
-    font-size: calc(13px * var(--label-scale));
+    font-size: calc(13px * var(--contents-scale));
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: #666;
     margin-top: calc(18px * var(--label-scale));
     border-top: 1px solid #ddd;
-    padding-top: calc(10px * var(--label-scale));
+    padding-top: calc(10px * var(--contents-scale));
   }
   #label-contents {
-    font-size: calc(15px * var(--label-scale));
-    margin-top: calc(6px * var(--label-scale));
-    column-width: 2.2in;
-    column-gap: 0.25in;
+    font-size: calc(15px * var(--contents-scale));
+    margin-top: calc(6px * var(--contents-scale));
+    column-width: calc(2.2in * var(--contents-scale));
+    column-gap: calc(0.25in * var(--contents-scale));
   }
-  #label-contents div { break-inside: avoid; padding: calc(2px * var(--label-scale)) 0; }
+  #label-contents div { break-inside: avoid; padding: calc(2px * var(--contents-scale)) 0; }
   #label-empty { color: #999; font-style: italic; }
   #label-truncated { color: #888; font-style: italic; margin-top: 4px; }
 

@@ -172,14 +172,22 @@
     return chain.reverse(); // root-first
   }
 
-  // Shrinks a label's text (via --label-scale) until it fits the fixed
-  // half-letter box; if still too tall at minimum scale, drops trailing
-  // content lines. The .label-page overflow:hidden is the hard backstop.
+  // Shrinks a label's text until it fits the fixed half-letter box. Name/
+  // parent/photos scale via --label-scale down to MIN_SCALE (a comfortable
+  // reading floor); the contents list has its OWN independent
+  // --contents-scale that keeps shrinking (with narrower columns) well past
+  // that point, since a long inventory list is common and shouldn't get
+  // truncated just because name/parent already hit their minimum. Only as
+  // an extreme last resort (contents scale also maxed out) does it drop
+  // trailing items - the .label-page overflow:hidden is the hard backstop
+  // either way.
   function fitToPage(labelPage, labelText, itemsIn, renderContents) {
     const MIN_SCALE = 0.55;
     const MAX_SCALE = 2.5;
+    const MIN_CONTENTS_SCALE = 0.3;
     let scale = 1;
     labelPage.style.setProperty('--label-scale', '1');
+    labelPage.style.setProperty('--contents-scale', '1');
 
     const fits = () => labelText.scrollHeight <= labelText.clientHeight + 1;
 
@@ -189,8 +197,10 @@
       while (scale < MAX_SCALE) {
         const next = Math.min(MAX_SCALE, scale + 0.1);
         labelPage.style.setProperty('--label-scale', next.toFixed(2));
+        labelPage.style.setProperty('--contents-scale', next.toFixed(2));
         if (!fits()) {
           labelPage.style.setProperty('--label-scale', scale.toFixed(2));
+          labelPage.style.setProperty('--contents-scale', scale.toFixed(2));
           break;
         }
         scale = next;
@@ -201,9 +211,22 @@
     while (!fits() && scale > MIN_SCALE) {
       scale = Math.max(MIN_SCALE, scale - 0.05);
       labelPage.style.setProperty('--label-scale', scale.toFixed(2));
+      labelPage.style.setProperty('--contents-scale', scale.toFixed(2));
     }
     if (fits()) return;
 
+    // Name/parent/photos are now fixed at MIN_SCALE (still readable) - keep
+    // shrinking just the contents text/columns further instead of dropping
+    // items.
+    let contentsScale = MIN_SCALE;
+    while (!fits() && contentsScale > MIN_CONTENTS_SCALE) {
+      contentsScale = Math.max(MIN_CONTENTS_SCALE, contentsScale - 0.03);
+      labelPage.style.setProperty('--contents-scale', contentsScale.toFixed(2));
+    }
+    if (fits()) return;
+
+    // Still doesn't fit even at the smallest contents scale (an extremely
+    // long list) - drop items from the end as a last resort.
     const lines = itemsIn.value.split('\n').map(s => s.trim()).filter(Boolean);
     let visible = lines.length;
     while (visible > 0 && !fits()) {
