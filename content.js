@@ -171,10 +171,34 @@
 
     const printBtn = makeBtn('🖨  Print Label', '#2c7a4b');
     printBtn.addEventListener('click', () => {
-      const data = scrapeLocationData();
-      chrome.storage.local.set({ hbLabelData: data }, () => {
-        chrome.runtime.sendMessage({ type: 'hbOpenPage', page: 'print.html' });
-      });
+      // Even on an already-visible page, the photo gallery/items list can
+      // still be a beat behind the rest of the page hydrating (e.g. clicking
+      // right after navigating here) - wait for the scraped photo/item
+      // counts to stop changing before finalizing, instead of grabbing
+      // whatever happens to be rendered at the instant of the click.
+      let tries = 0;
+      let lastPhotoCount = -1;
+      let lastItemCount = -1;
+      let stableChecks = 0;
+      const tick = () => {
+        tries++;
+        const data = scrapeLocationData();
+        if (data.photoUrls.length === lastPhotoCount && data.items.length === lastItemCount) {
+          stableChecks++;
+        } else {
+          stableChecks = 0;
+          lastPhotoCount = data.photoUrls.length;
+          lastItemCount = data.items.length;
+        }
+        if (stableChecks >= 2 || tries >= 10) {
+          chrome.storage.local.set({ hbLabelData: data }, () => {
+            chrome.runtime.sendMessage({ type: 'hbOpenPage', page: 'print.html' });
+          });
+        } else {
+          setTimeout(tick, 300);
+        }
+      };
+      tick();
     });
 
     const bulkBtn = makeBtn('📋  Bulk Print', '#3b6ea5');
