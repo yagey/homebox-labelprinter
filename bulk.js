@@ -122,11 +122,25 @@
       // h1/items yet. On a remote host with real network latency (vs.
       // near-zero on localhost) that hydration can take a few seconds, so
       // give this a generous budget (up to ~15s) rather than giving up early.
+      // The name (from the <h1>) and the items list (from a separate, often
+      // slower API call) can render at different times - resolving as soon
+      // as just the name shows up would grab a name with a still-empty items
+      // list. Require the item count to stop changing for 2 consecutive
+      // checks (in addition to having a name) before treating it as settled,
+      // so a genuinely-empty location isn't confused with one still loading.
       let tries = 0;
+      let lastItemCount = -1;
+      let stableChecks = 0;
       const tick = () => {
         tries++;
         const data = attempt();
-        if (data.name || data.items.length || tries >= 25) {
+        if (data.items.length === lastItemCount) {
+          stableChecks++;
+        } else {
+          stableChecks = 0;
+          lastItemCount = data.items.length;
+        }
+        if ((data.name && stableChecks >= 2) || tries >= 25) {
           resolve(data);
         } else {
           setTimeout(tick, 600);
