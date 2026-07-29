@@ -53,15 +53,24 @@ upright/normal, so it reads correctly on the box after that turn.
    each physical 8.5in x 11in sheet, with a dashed guide down the middle
    showing where to cut/fold to separate them.
 
-## Photo
+## Photos
 
-If the location has a photo uploaded in Homebox, its first photo is pulled
-in automatically as a thumbnail on the label (a real mnemonic - much more
-useful for spotting the right bin/shelf at a glance than a generic icon).
-The "Photo URL" field on the print page is editable/clearable like the
-other fields; leave it blank to omit the photo. If the photo fails to load
-(e.g. its access token expired while you were reviewing the label), it's
-silently hidden rather than showing a broken-image icon.
+If the location has photos uploaded in Homebox, they're all pulled in
+automatically as a side-by-side thumbnail strip on the label (a real
+mnemonic - much more useful for spotting the right bin/shelf at a glance
+than a generic icon). The "Photo URLs" field on the print page is editable
+(one URL per line, blank to omit); if any photo fails to load (e.g. its
+access token expired while you were reviewing the label), that thumbnail
+is silently hidden rather than showing a broken-image icon.
+
+## Item quantities
+
+If an item's quantity in Homebox is set to more than 1, its label line
+shows a count prefix, e.g. "(2) Chainsaw blade" - items with a quantity of
+1 (the default) show with no prefix. This is scraped with a best-effort
+heuristic (no reliable way to target Homebox's quantity badge/column
+directly), so double-check it on the editable Contents field before
+printing.
 
 ## Mnemonic icon
 

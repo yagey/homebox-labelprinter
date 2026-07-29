@@ -61,6 +61,30 @@
         return firstLine || '';
       }
 
+      // Best-effort quantity: Homebox shows it as a small badge (card view)
+      // or table column with no distinguishing class/attribute to target
+      // directly. Card view's insured/archived indicators are icons (no
+      // text), and table view's asset-ID column (which CAN also be a bare
+      // number) sits BEFORE the name column while quantity sits right AFTER
+      // it in both layouts - so the first bare-integer leaf element found
+      // after the name is reliably the quantity, not the asset ID or a
+      // later column like price. Falls back to 1 (shown without a count
+      // prefix) if nothing matches.
+      function extractItemQuantity(a, name) {
+        const container = a.closest('tr') || a;
+        let seenName = false;
+        for (const el of container.querySelectorAll('*')) {
+          if (el.children.length > 0) continue;
+          const text = el.textContent.trim();
+          if (!seenName) {
+            if (text === name) seenName = true;
+            continue;
+          }
+          if (/^\d{1,5}$/.test(text)) return parseInt(text, 10);
+        }
+        return 1;
+      }
+
       function attempt() {
         const locationId = (location.pathname.match(/\/location\/([a-f0-9-]+)/i) || [])[1];
 
@@ -99,9 +123,9 @@
           if (!m) continue;
           if (seen.has(m[1])) continue;
           const itemName = extractItemName(a);
-          if (itemName) seen.set(m[1], itemName);
+          if (itemName) seen.set(m[1], { name: itemName, quantity: extractItemQuantity(a, itemName) });
         }
-        const items = Array.from(seen.values());
+        const items = Array.from(seen.values()).map(({ name, quantity }) => (quantity > 1 ? `(${quantity}) ${name}` : name));
 
         // All uploaded photos, if any - each <img> src already embeds a
         // short-lived access_token query param, so it's a self-contained
