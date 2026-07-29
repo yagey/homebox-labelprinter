@@ -195,7 +195,13 @@
     renderContents(lines, 0);
     renderQr(els.url.value);
     renderMnemonic(els.name.value, lines);
-    fitToPage(lines);
+    // fitToPage's scrollHeight/clientHeight measurement can be wrong if the
+    // browser hasn't finished its first layout/paint pass yet (seen right
+    // after the tab is created) - any LATER call (e.g. triggered by typing)
+    // is accurate since a paint has happened by then. Double rAF defers
+    // past that first paint instead of relying on a second user-triggered
+    // call to "fix" it.
+    requestAnimationFrame(() => requestAnimationFrame(() => fitToPage(lines)));
   }
 
   // ---- Full ancestor tree resolution ----

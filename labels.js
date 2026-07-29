@@ -339,7 +339,12 @@
       renderContents(lines, 0);
       renderQr(labelQr, urlIn.value);
       renderMnemonic(labelMnemonic, nameIn.value, lines);
-      fitToPage(labelPage, labelText, itemsIn, renderContents);
+      // fitToPage's scrollHeight/clientHeight measurement can be wrong if the
+      // browser hasn't finished its first layout/paint pass yet (more likely
+      // here than in single-print mode, since many blocks get built in a
+      // tight loop) - any LATER call is accurate since a paint has happened
+      // by then. Double rAF defers past that first paint.
+      requestAnimationFrame(() => requestAnimationFrame(() => fitToPage(labelPage, labelText, itemsIn, renderContents)));
     }
 
     [nameIn, parentIn, urlIn, itemsIn, photosIn].forEach(el => el.addEventListener('input', refresh));
