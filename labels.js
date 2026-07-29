@@ -73,29 +73,50 @@
   // through each ancestor's own page in a hidden background tab, reading
   // its immediate parent link, until there isn't one). ----
 
+  // Returns a Promise (chrome.scripting.executeScript awaits it) - a browser
+  // tab reaching "complete" only means the HTML/assets finished loading, not
+  // that the Nuxt/Vue app has hydrated and rendered the h1/breadcrumb yet.
+  // On a remote host with real network latency (vs. near-zero on localhost)
+  // that hydration can take a couple seconds, so poll instead of reading once.
   function standaloneGetBreadcrumb() {
-    const h1 = document.querySelector('h1');
-    let name = '';
-    if (h1) {
-      for (const node of h1.childNodes) {
-        if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
-          name = node.textContent.trim();
-          break;
+    function attempt() {
+      const h1 = document.querySelector('h1');
+      let name = '';
+      if (h1) {
+        for (const node of h1.childNodes) {
+          if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+            name = node.textContent.trim();
+            break;
+          }
+        }
+        if (!name) name = h1.textContent.trim();
+      }
+      let parentName = '';
+      let parentHref = '';
+      const nav = document.querySelector('nav[aria-label="breadcrumb"]');
+      if (nav) {
+        const a = nav.querySelector('a[href*="/location/"]');
+        if (a) {
+          parentName = a.textContent.trim();
+          parentHref = new URL(a.getAttribute('href'), location.origin).href;
         }
       }
-      if (!name) name = h1.textContent.trim();
+      return { name, parentName, parentHref };
     }
-    let parentName = '';
-    let parentHref = '';
-    const nav = document.querySelector('nav[aria-label="breadcrumb"]');
-    if (nav) {
-      const a = nav.querySelector('a[href*="/location/"]');
-      if (a) {
-        parentName = a.textContent.trim();
-        parentHref = new URL(a.getAttribute('href'), location.origin).href;
-      }
-    }
-    return { name, parentName, parentHref };
+
+    return new Promise((resolve) => {
+      let tries = 0;
+      const tick = () => {
+        tries++;
+        const data = attempt();
+        if (data.name || tries >= 25) {
+          resolve(data);
+        } else {
+          setTimeout(tick, 500);
+        }
+      };
+      tick();
+    });
   }
 
   async function fetchBreadcrumb(url) {

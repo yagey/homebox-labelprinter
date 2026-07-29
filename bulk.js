@@ -117,14 +117,19 @@
         return { url: location.href, locationId, name, parentName, parentHref, items, photoUrls };
       }
 
+      // A browser tab reaching "complete" only means the HTML/assets finished
+      // loading, not that the Nuxt/Vue app has hydrated and rendered the
+      // h1/items yet. On a remote host with real network latency (vs.
+      // near-zero on localhost) that hydration can take a few seconds, so
+      // give this a generous budget (up to ~15s) rather than giving up early.
       let tries = 0;
       const tick = () => {
         tries++;
         const data = attempt();
-        if (data.name || data.items.length || tries >= 8) {
+        if (data.name || data.items.length || tries >= 25) {
           resolve(data);
         } else {
-          setTimeout(tick, 400);
+          setTimeout(tick, 600);
         }
       };
       tick();
