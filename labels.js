@@ -257,16 +257,18 @@
     const labelPage = document.createElement('div');
     labelPage.className = 'label-page';
     labelPage.innerHTML = `
-      <div class="label-left-col">
-        <div class="label-qr"></div>
-        <div class="label-mnemonic"></div>
-      </div>
-      <div class="label-text">
-        <div class="label-photos"></div>
-        <div class="label-name"></div>
-        <div class="label-parent"></div>
-        <div class="label-contents-title">Contents</div>
-        <div class="label-contents"></div>
+      <div class="label-photos"></div>
+      <div class="label-bottom-row">
+        <div class="label-left-col">
+          <div class="label-qr"></div>
+          <div class="label-mnemonic"></div>
+        </div>
+        <div class="label-text">
+          <div class="label-name"></div>
+          <div class="label-parent"></div>
+          <div class="label-contents-title">Contents</div>
+          <div class="label-contents"></div>
+        </div>
       </div>
     `;
 

@@ -63,10 +63,32 @@
     border: 1px solid #999;
     padding: 0.35in;
     display: flex;
-    align-items: flex-start; /* QR/mnemonic column sits at the top, not vertically centered */
-    gap: 0.3in;
+    flex-direction: column; /* full-width photo strip on top, QR/mnemonic + text row below */
+    gap: calc(10px * var(--label-scale));
     margin: 0 auto;
     overflow: hidden; /* hard guarantee: content can never spill onto a 2nd printed page */
+  }
+  /* Strip of 1+ photo thumbnails, spanning the full label width - see
+     print.html for the sizing rationale. */
+  .label-photos {
+    display: none;
+    flex: 0 0 auto;
+    gap: calc(4px * var(--label-scale));
+    height: calc(1.8in * var(--label-scale));
+  }
+  .label-photos img {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 6px;
+  }
+  .label-bottom-row {
+    flex: 1;
+    display: flex;
+    align-items: flex-start; /* QR/mnemonic column sits at the top, not vertically centered */
+    gap: 0.3in;
+    min-height: 0;
   }
   .label-left-col {
     flex: 0 0 auto;
@@ -93,20 +115,6 @@
     line-height: 1;
   }
   .label-text { flex: 1; align-self: stretch; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
-  /* Strip of 1+ photo thumbnails - see print.html for the sizing rationale. */
-  .label-photos {
-    display: none;
-    gap: calc(4px * var(--label-scale));
-    height: calc(1.3in * var(--label-scale));
-    margin: 0 0 calc(8px * var(--label-scale));
-  }
-  .label-photos img {
-    flex: 1 1 0;
-    min-width: 0;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 6px;
-  }
   .label-name { font-size: calc(38px * var(--label-scale)); font-weight: 700; line-height: 1.15; text-align: center; word-break: break-word; }
   .label-parent { font-size: calc(16px * var(--label-scale)); color: #444; margin-top: calc(8px * var(--label-scale)); word-break: break-word; }
   .parent-status { font-size: 0.7rem; color: #888; font-style: italic; margin-left: 6px; }

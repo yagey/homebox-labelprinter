@@ -87,9 +87,35 @@
     border: 1px solid #999;
     padding: 0.35in;
     display: flex;
+    flex-direction: column; /* full-width photo strip on top, QR/mnemonic + text row below */
+    gap: calc(10px * var(--label-scale));
+    overflow: hidden; /* hard guarantee: content can never spill onto a 2nd printed page */
+  }
+  /* Strip of 1+ photo thumbnails, spanning the full label width. Fixed
+     height (not just a max) so fitToPage's very first measurement - taken
+     before any image has loaded and has real intrinsic dimensions - is
+     already accurate. Each thumbnail's width comes from flex:1 (pure layout
+     math, independent of image load state), so the same guarantee holds
+     per-thumbnail too. */
+  #label-photos {
+    display: none; /* toggled on via JS if any photo URLs were scraped */
+    flex: 0 0 auto;
+    gap: calc(4px * var(--label-scale));
+    height: calc(1.8in * var(--label-scale));
+  }
+  #label-photos img {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 6px;
+  }
+  #label-bottom-row {
+    flex: 1;
+    display: flex;
     align-items: flex-start; /* QR/mnemonic column sits at the top, not vertically centered */
     gap: 0.3in;
-    overflow: hidden; /* hard guarantee: content can never spill onto a 2nd printed page */
+    min-height: 0;
   }
   #label-left-col {
     flex: 0 0 auto;
@@ -119,29 +145,11 @@
   }
   #label-text {
     flex: 1;
-    align-self: stretch; /* #label-page uses align-items:flex-start (to pin the QR column to the top), which would otherwise also shrink this box to its own content height instead of the full 4.8in budget - breaking fitToPage's overflow check entirely */
+    align-self: stretch; /* #label-bottom-row uses align-items:flex-start (to pin the QR column to the top), which would otherwise also shrink this box to its own content height instead of the full row budget - breaking fitToPage's overflow check entirely */
     display: flex;
     flex-direction: column;
     min-width: 0;
     min-height: 0;
-  }
-  /* Strip of 1+ photo thumbnails, side by side. Fixed height (not just a
-     max) so fitToPage's very first measurement - taken before any image
-     has loaded and has real intrinsic dimensions - is already accurate.
-     Each thumbnail's width comes from flex:1 (pure layout math, independent
-     of image load state), so the same guarantee holds per-thumbnail too. */
-  #label-photos {
-    display: none; /* toggled on via JS if any photo URLs were scraped */
-    gap: calc(4px * var(--label-scale));
-    height: calc(1.3in * var(--label-scale));
-    margin: 0 0 calc(8px * var(--label-scale));
-  }
-  #label-photos img {
-    flex: 1 1 0;
-    min-width: 0;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 6px;
   }
   #label-name {
     font-size: calc(38px * var(--label-scale));
@@ -220,16 +228,18 @@
 
   <div id="print-sheet">
     <div id="label-page">
-      <div id="label-left-col">
-        <div id="label-qr"></div>
-        <div id="label-mnemonic"></div>
-      </div>
-      <div id="label-text">
-        <div id="label-photos"></div>
-        <div id="label-name"></div>
-        <div id="label-parent"></div>
-        <div id="label-contents-title">Contents</div>
-        <div id="label-contents"></div>
+      <div id="label-photos"></div>
+      <div id="label-bottom-row">
+        <div id="label-left-col">
+          <div id="label-qr"></div>
+          <div id="label-mnemonic"></div>
+        </div>
+        <div id="label-text">
+          <div id="label-name"></div>
+          <div id="label-parent"></div>
+          <div id="label-contents-title">Contents</div>
+          <div id="label-contents"></div>
+        </div>
       </div>
     </div>
     <div id="fold-guide">fold/cut here - the bottom half is intentionally blank</div>
