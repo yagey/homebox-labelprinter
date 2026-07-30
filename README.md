@@ -88,6 +88,20 @@ Visiting the Locations tree page (`/locations`) automatically clicks
 Homebox's own "expand all" button for you, so nested locations are fully
 expanded on load instead of requiring a manual click.
 
+## Pagination removed
+
+Homebox's item list normally paginates client-side at 10-12 items per
+page (a setting called "items per page"), which meant this extension
+could only see the first page of items when scraping a location with
+more items than that. Visiting any location/locations page now bumps
+that setting to a large number automatically, so the full item list
+renders on one page - both for browsing normally and for this
+extension's scraping. This is a real, persistent change to your actual
+"items per page" preference (it syncs to the Homebox server like any
+other setting change there), not a temporary trick. If Homebox was
+already open in a tab via client-side navigation, one hard refresh may
+be needed for it to take effect.
+
 ## Works on any Homebox host - no configuration needed
 
 The extension matches on URL *path* (`/location/*`, `/locations*`) rather
