@@ -104,8 +104,7 @@
     return 1;
   }
 
-  function scrapeItems() {
-    const seen = new Map();
+  function scrapeItemsOnPage(seen) {
     for (const a of document.querySelectorAll('a[href*="/item/"]')) {
       if (!isVisible(a)) continue;
       const m = (a.getAttribute('href') || '').match(/\/item\/([a-f0-9-]+)/i);
@@ -114,6 +113,76 @@
       if (seen.has(id)) continue;
       const name = extractItemName(a);
       if (name) seen.set(id, { name, quantity: extractItemQuantity(a, name) });
+    }
+  }
+
+  // Homebox paginates its item list client-side - normally disabled by
+  // remove-pagination.js (bumps the "items per page" preference), but
+  // that's an async fix that also syncs to the server, racing against
+  // Homebox's own preference sync on a slow connection. This is a safety
+  // net: if pagination controls are still showing (bare numeric page-
+  // number buttons, outside any item card/row so they can't be confused
+  // with a quantity/asset-ID badge), click through them and merge items
+  // from every page.
+  function findNextPageButton(currentPage) {
+    let best = null;
+    let bestValue = currentPage;
+    for (const btn of document.querySelectorAll('button')) {
+      if (btn.closest('a[href*="/item/"]') || btn.closest('tr')) continue;
+      const text = btn.textContent.trim();
+      if (!/^\d{1,4}$/.test(text)) continue;
+      const value = parseInt(text, 10);
+      if (value > currentPage && (best === null || value < bestValue)) {
+        best = btn;
+        bestValue = value;
+      }
+    }
+    return best;
+  }
+
+  // Resolves once the item link count on the CURRENT page stops changing
+  // for 2 consecutive checks (up to ~15s) - generous for the initial,
+  // network-bound hydration; pagination clicks are purely client-side (all
+  // items are already fetched into memory), so this resolves near-instantly
+  // for page 2+.
+  function waitForItemsSettled() {
+    return new Promise((resolve) => {
+      let tries = 0;
+      let lastCount = -1;
+      let stableChecks = 0;
+      const tick = () => {
+        tries++;
+        const count = document.querySelectorAll('a[href*="/item/"]').length;
+        if (count === lastCount) {
+          stableChecks++;
+        } else {
+          stableChecks = 0;
+          lastCount = count;
+        }
+        if (stableChecks >= 2 || tries >= 25) {
+          resolve();
+        } else {
+          setTimeout(tick, 600);
+        }
+      };
+      tick();
+    });
+  }
+
+  async function scrapeAllItemPages() {
+    const seen = new Map();
+    await waitForItemsSettled();
+    scrapeItemsOnPage(seen);
+    let currentPage = 1;
+    let guard = 0;
+    while (guard < 50) {
+      guard++;
+      const btn = findNextPageButton(currentPage);
+      if (!btn) break;
+      btn.click();
+      currentPage++;
+      await waitForItemsSettled();
+      scrapeItemsOnPage(seen);
     }
     return Array.from(seen.values()).map(({ name, quantity }) => (quantity > 1 ? `(${quantity}) ${name}` : name));
   }
@@ -136,7 +205,7 @@
   // exact DOM/class names can change between Homebox versions, everything
   // scraped here is shown in an EDITABLE form on the print page - so
   // imperfect scraping is always fixable by the user before printing.
-  function scrapeLocationData() {
+  async function scrapeLocationData() {
     const locationId = getLocationId();
     const parent = getParentLink(locationId);
 
@@ -146,7 +215,7 @@
       name: getLocationName(),
       parentName: parent ? parent.name : '',
       parentHref: parent ? parent.href : '', // NOT rewritten - used for the ancestor-walk, must stay on the real browsing origin
-      items: scrapeItems(),
+      items: await scrapeAllItemPages(),
       photoUrls: getPhotoUrls()
     };
   }
@@ -193,35 +262,38 @@
     }
 
     const printBtn = makeBtn('🖨  Print Label', '#2c7a4b');
-    printBtn.addEventListener('click', () => {
-      // Even on an already-visible page, the photo gallery/items list can
-      // still be a beat behind the rest of the page hydrating (e.g. clicking
-      // right after navigating here) - wait for the scraped photo/item
-      // counts to stop changing before finalizing, instead of grabbing
-      // whatever happens to be rendered at the instant of the click.
-      let tries = 0;
-      let lastPhotoCount = -1;
-      let lastItemCount = -1;
-      let stableChecks = 0;
-      const tick = () => {
-        tries++;
-        const data = scrapeLocationData();
-        if (data.photoUrls.length === lastPhotoCount && data.items.length === lastItemCount) {
-          stableChecks++;
-        } else {
-          stableChecks = 0;
-          lastPhotoCount = data.photoUrls.length;
-          lastItemCount = data.items.length;
-        }
-        if (stableChecks >= 2 || tries >= 10) {
-          chrome.storage.local.set({ hbLabelData: data }, () => {
-            chrome.runtime.sendMessage({ type: 'hbOpenPage', page: 'print.html' });
-          });
-        } else {
-          setTimeout(tick, 300);
-        }
-      };
-      tick();
+    printBtn.addEventListener('click', async () => {
+      // Even on an already-visible page, the photo gallery can still be a
+      // beat behind the rest of the page hydrating (e.g. clicking right
+      // after navigating here) - wait for the scraped photo count to stop
+      // changing before finalizing. Items get their own dedicated wait
+      // (plus a pagination-walk) inside scrapeLocationData().
+      await new Promise((resolve) => {
+        let tries = 0;
+        let lastPhotoCount = -1;
+        let stableChecks = 0;
+        const tick = () => {
+          tries++;
+          const count = getPhotoUrls().length;
+          if (count === lastPhotoCount) {
+            stableChecks++;
+          } else {
+            stableChecks = 0;
+            lastPhotoCount = count;
+          }
+          if (stableChecks >= 2 || tries >= 10) {
+            resolve();
+          } else {
+            setTimeout(tick, 300);
+          }
+        };
+        tick();
+      });
+
+      const data = await scrapeLocationData();
+      chrome.storage.local.set({ hbLabelData: data }, () => {
+        chrome.runtime.sendMessage({ type: 'hbOpenPage', page: 'print.html' });
+      });
     });
 
     const bulkBtn = makeBtn('📋  Bulk Print', '#3b6ea5');

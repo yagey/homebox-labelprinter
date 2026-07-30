@@ -85,7 +85,95 @@
         return 1;
       }
 
-      function attempt() {
+      function scrapeItemsOnPage(seen) {
+        for (const a of document.querySelectorAll('a[href*="/item/"]')) {
+          if (!isVisible(a)) continue;
+          const m = (a.getAttribute('href') || '').match(/\/item\/([a-f0-9-]+)/i);
+          if (!m) continue;
+          if (seen.has(m[1])) continue;
+          const itemName = extractItemName(a);
+          if (itemName) seen.set(m[1], { name: itemName, quantity: extractItemQuantity(a, itemName) });
+        }
+      }
+
+      // Homebox paginates its item list client-side - normally disabled by
+      // this extension's remove-pagination.js (a separate content script
+      // that bumps the "items per page" preference), but that's an async
+      // fix that also syncs to the server, racing against Homebox's own
+      // preference sync on a slow connection - especially with several
+      // background tabs scraping at once, it can lose that race. This is a
+      // safety net: if pagination controls are still showing (bare numeric
+      // page-number buttons, outside any item card/row so they can't be
+      // confused with a quantity/asset-ID badge), click through them and
+      // merge items from every page.
+      function findNextPageButton(currentPage) {
+        let best = null;
+        let bestValue = currentPage;
+        for (const btn of document.querySelectorAll('button')) {
+          if (btn.closest('a[href*="/item/"]') || btn.closest('tr')) continue;
+          const text = btn.textContent.trim();
+          if (!/^\d{1,4}$/.test(text)) continue;
+          const value = parseInt(text, 10);
+          if (value > currentPage && (best === null || value < bestValue)) {
+            best = btn;
+            bestValue = value;
+          }
+        }
+        return best;
+      }
+
+      // A browser tab reaching "complete" only means the HTML/assets
+      // finished loading, not that the Nuxt/Vue app has hydrated and
+      // rendered the items yet. On a remote host with real network latency
+      // (vs. near-zero on localhost) that hydration can take a few
+      // seconds, so give this a generous budget (up to ~15s) rather than
+      // giving up early - resolving once the item link count on the
+      // CURRENT page stops changing for 2 consecutive checks. Pagination
+      // clicks are purely client-side (all items are already fetched into
+      // memory), so this resolves near-instantly for page 2+.
+      function waitForItemsSettled() {
+        return new Promise((resolve) => {
+          let tries = 0;
+          let lastCount = -1;
+          let stableChecks = 0;
+          const tick = () => {
+            tries++;
+            const count = document.querySelectorAll('a[href*="/item/"]').length;
+            if (count === lastCount) {
+              stableChecks++;
+            } else {
+              stableChecks = 0;
+              lastCount = count;
+            }
+            if (stableChecks >= 2 || tries >= 25) {
+              resolve();
+            } else {
+              setTimeout(tick, 600);
+            }
+          };
+          tick();
+        });
+      }
+
+      async function scrapeAllItemPages() {
+        const seen = new Map();
+        await waitForItemsSettled();
+        scrapeItemsOnPage(seen);
+        let currentPage = 1;
+        let guard = 0;
+        while (guard < 50) {
+          guard++;
+          const btn = findNextPageButton(currentPage);
+          if (!btn) break;
+          btn.click();
+          currentPage++;
+          await waitForItemsSettled();
+          scrapeItemsOnPage(seen);
+        }
+        return Array.from(seen.values()).map(({ name, quantity }) => (quantity > 1 ? `(${quantity}) ${name}` : name));
+      }
+
+      async function attempt() {
         const locationId = (location.pathname.match(/\/location\/([a-f0-9-]+)/i) || [])[1];
 
         // Immediate parent: single link inside <nav aria-label="breadcrumb">.
@@ -114,18 +202,7 @@
           if (!name) name = h1.textContent.trim();
         }
 
-        // Items: links to /item/<uuid>, de-duped by id (table view links
-        // every non-action cell to the same item).
-        const seen = new Map();
-        for (const a of document.querySelectorAll('a[href*="/item/"]')) {
-          if (!isVisible(a)) continue;
-          const m = (a.getAttribute('href') || '').match(/\/item\/([a-f0-9-]+)/i);
-          if (!m) continue;
-          if (seen.has(m[1])) continue;
-          const itemName = extractItemName(a);
-          if (itemName) seen.set(m[1], { name: itemName, quantity: extractItemQuantity(a, itemName) });
-        }
-        const items = Array.from(seen.values()).map(({ name, quantity }) => (quantity > 1 ? `(${quantity}) ${name}` : name));
+        const items = await scrapeAllItemPages();
 
         // All uploaded photos, if any - each <img> src already embeds a
         // short-lived access_token query param, so it's a self-contained
@@ -141,31 +218,15 @@
         return { url: location.href, locationId, name, parentName, parentHref, items, photoUrls };
       }
 
-      // A browser tab reaching "complete" only means the HTML/assets finished
-      // loading, not that the Nuxt/Vue app has hydrated and rendered the
-      // h1/items yet. On a remote host with real network latency (vs.
-      // near-zero on localhost) that hydration can take a few seconds, so
-      // give this a generous budget (up to ~15s) rather than giving up early.
-      // The name (from the <h1>) and the items list (from a separate, often
-      // slower API call) can render at different times - resolving as soon
-      // as just the name shows up would grab a name with a still-empty items
-      // list. Require the item count to stop changing for 2 consecutive
-      // checks (in addition to having a name) before treating it as settled,
-      // so a genuinely-empty location isn't confused with one still loading.
+      // Wait for the page to have at least rendered a name before running
+      // attempt() (which does its own internal waiting/retrying for items).
       let tries = 0;
-      let lastItemCount = -1;
-      let stableChecks = 0;
       const tick = () => {
         tries++;
-        const data = attempt();
-        if (data.items.length === lastItemCount) {
-          stableChecks++;
-        } else {
-          stableChecks = 0;
-          lastItemCount = data.items.length;
-        }
-        if ((data.name && stableChecks >= 2) || tries >= 25) {
-          resolve(data);
+        const h1 = document.querySelector('h1');
+        const hasName = h1 && h1.textContent.trim();
+        if (hasName || tries >= 25) {
+          attempt().then(resolve);
         } else {
           setTimeout(tick, 600);
         }
