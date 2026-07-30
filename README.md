@@ -49,9 +49,9 @@ upright/normal, so it reads correctly on the box after that turn.
    Homebox; this is read-only.
 5. A new tab opens with one editable label per selected location. Review/edit
    each, then click **Print all labels** to send everything to your
-   browser's print dialog in one go - two half-page labels are stacked onto
-   each physical 8.5in x 11in sheet, with a dashed guide down the middle
-   showing where to cut/fold to separate them.
+   browser's print dialog in one go - each label gets its own full
+   8.5in x 11in sheet (top half only, same as single-label print), with a
+   dashed fold/cut guide below it.
 
 ## Photos
 

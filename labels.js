@@ -272,8 +272,13 @@
       </div>
     `;
 
+    const foldGuide = document.createElement('div');
+    foldGuide.className = 'label-fold-guide';
+    foldGuide.textContent = 'fold/cut here - the bottom half is intentionally blank';
+
     block.appendChild(panel);
     block.appendChild(labelPage);
+    block.appendChild(foldGuide);
     container.appendChild(block);
 
     const nameIn = panel.querySelector('[data-field="name"]');

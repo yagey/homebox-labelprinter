@@ -133,18 +133,29 @@
   .label-contents div { break-inside: avoid; padding: calc(2px * var(--contents-scale)) 0; }
   .label-empty { color: #999; font-style: italic; }
   .label-truncated { color: #888; font-style: italic; margin-top: 4px; }
+  /* One physical 8.5x11 sheet per label - the label occupies the top half
+     only, the rest of the sheet is left blank on purpose (fold/cut to get
+     the actual half-page label) - matches print.html's single-label layout
+     instead of squeezing two different locations' labels onto one sheet. */
+  .label-fold-guide {
+    width: 8.5in;
+    margin: 0 auto;
+    text-align: center;
+    font-size: 10px;
+    color: #999;
+    border-top: 1px dashed #999;
+    padding-top: 4px;
+  }
 
   @media print {
     body { background: #fff; padding: 0; }
     .no-print { display: none !important; }
     .label-page { border: none; margin: 0; }
-    .item-block { margin: 0; }
-    /* Two half-letter labels stacked fill one physical 8.5x11 sheet -
-       break the page after every 2nd block instead of every block. */
-    .item-block:nth-of-type(2n) {
+    .item-block {
+      margin: 0;
       page-break-after: always;
-      border-top: 1px dashed #999; /* fold/cut guide between the two halves */
     }
+    .item-block:last-of-type { page-break-after: auto; }
     @page { size: 8.5in 11in; margin: 0; }
   }
 </style>
