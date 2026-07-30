@@ -88,20 +88,23 @@
     padding: 0.35in;
     display: flex;
     flex-direction: column; /* full-width photo strip on top, QR/mnemonic + text row below */
-    gap: calc(10px * var(--label-scale));
+    gap: 10px; /* fixed, not tied to --label-scale - see #label-photos comment */
     overflow: hidden; /* hard guarantee: content can never spill onto a 2nd printed page */
   }
   /* Strip of 1+ photo thumbnails, spanning the full label width. Fixed
-     height (not just a max) so fitToPage's very first measurement - taken
-     before any image has loaded and has real intrinsic dimensions - is
-     already accurate. Each thumbnail's width comes from flex:1 (pure layout
-     math, independent of image load state), so the same guarantee holds
-     per-thumbnail too. */
+     height in every sense - not just "not a max" (so fitToPage's very first
+     measurement, taken before any image has loaded, is accurate), but also
+     NOT tied to --label-scale: the QR/mnemonic column below shares this
+     same vertical budget now (it didn't in the old layout, where photos
+     lived inside the text column and QR/mnemonic had their own independent
+     full-height column) - if this grew with --label-scale on short-content
+     labels, it would eat into the fixed-size QR/mnemonic column's space and
+     get it silently clipped by the overflow:hidden above. */
   #label-photos {
     display: none; /* toggled on via JS if any photo URLs were scraped */
     flex: 0 0 auto;
-    gap: calc(4px * var(--label-scale));
-    height: calc(1.8in * var(--label-scale));
+    gap: 4px;
+    height: 1.8in;
   }
   #label-photos img {
     flex: 1 1 0;
@@ -122,25 +125,30 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.15in;
+    gap: 0.1in;
   }
   #label-qr {
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  #label-qr svg { width: 2.2in; height: 2.2in; }
+  /* Sized (along with #label-mnemonic below) to comfortably fit stacked
+     within the space left under the fixed-height photo strip (roughly
+     2.9in: 4.8in usable label height minus 1.8in photos minus gaps) -
+     1.5in + 1.1in + gap leaves a safety margin rather than exactly maxing
+     out the budget. */
+  #label-qr svg { width: 1.5in; height: 1.5in; }
   /* Fixed size (not tied to --label-scale) - keeping the QR/icon column's
      size independent of the text-shrink logic avoids the overflow risk of
      two separate growth mechanisms fighting each other. */
   #label-mnemonic {
-    width: 1.6in;
-    height: 1.6in;
-    border-radius: 14px;
+    width: 1.1in;
+    height: 1.1in;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.45in;
+    font-size: 0.3in;
     line-height: 1;
   }
   #label-text {

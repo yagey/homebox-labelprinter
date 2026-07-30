@@ -64,17 +64,19 @@
     padding: 0.35in;
     display: flex;
     flex-direction: column; /* full-width photo strip on top, QR/mnemonic + text row below */
-    gap: calc(10px * var(--label-scale));
+    gap: 10px; /* fixed, not tied to --label-scale - see print.html's #label-photos comment */
     margin: 0 auto;
     overflow: hidden; /* hard guarantee: content can never spill onto a 2nd printed page */
   }
-  /* Strip of 1+ photo thumbnails, spanning the full label width - see
-     print.html for the sizing rationale. */
+  /* Strip of 1+ photo thumbnails, spanning the full label width - fixed
+     height, NOT tied to --label-scale - see print.html for the full
+     rationale (it would otherwise eat into the QR/mnemonic column's fixed
+     space below on short-content labels, getting it silently clipped). */
   .label-photos {
     display: none;
     flex: 0 0 auto;
-    gap: calc(4px * var(--label-scale));
-    height: calc(1.8in * var(--label-scale));
+    gap: 4px;
+    height: 1.8in;
   }
   .label-photos img {
     flex: 1 1 0;
@@ -95,23 +97,26 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.15in;
+    gap: 0.1in;
   }
   .label-qr {
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  .label-qr svg { width: 2.2in; height: 2.2in; }
+  /* Sized (along with .label-mnemonic below) to comfortably fit stacked
+     within the space left under the fixed-height photo strip - see
+     print.html for the exact budget math. */
+  .label-qr svg { width: 1.5in; height: 1.5in; }
   /* Fixed size (not tied to --label-scale) - see print.html's comment. */
   .label-mnemonic {
-    width: 1.6in;
-    height: 1.6in;
-    border-radius: 14px;
+    width: 1.1in;
+    height: 1.1in;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.45in;
+    font-size: 0.3in;
     line-height: 1;
   }
   .label-text { flex: 1; align-self: stretch; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
